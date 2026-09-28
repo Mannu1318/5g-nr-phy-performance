@@ -20,7 +20,23 @@ The CRC implementation will be based on the applicable CRC procedures defined by
 
 * 3GPP TS 38.212 — NR; Multiplexing and channel coding.
 
-The exact CRC procedure, generator polynomial, CRC length, bit ordering, and applicable clause will be recorded when the implementation is finalized.
+For the initial implementation, this project will use CRC24A.
+
+CRC length:
+    24 bits
+
+Generator polynomial:
+
+    gCRC24A(D) =
+    D^24 + D^23 + D^18 + D^17 + D^14 + D^11 +
+    D^10 + D^7 + D^6 + D^5 + D^4 + D^3 + D + 1
+
+The CRC procedure and bit ordering will follow the applicable
+CRC calculation procedure defined in 3GPP TS 38.212.
+
+The exact TS 38.212 release used for implementation and the
+corresponding clause will be recorded before the reference
+implementation is written.
 
 The project will explicitly document the TS 38.212 release/version used so that the implementation remains reproducible.
 
