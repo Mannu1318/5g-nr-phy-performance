@@ -705,3 +705,82 @@ lookup-table implementation.
 This optimization provides a useful reference point for subsequent
 CRC experiments involving SIMD, multithreading, and memory/cache
 behavior.
+
+### AVX2 Vectorization Analysis
+
+The CRC24A lookup-table implementation was analyzed using GCC's
+vectorization diagnostics and generated assembly.
+
+The system CPU supports AVX2, and the compiler was invoked with:
+
+    gcc -O3 -march=native -fopt-info-vec-optimized \
+        -c kernels/crc24a_table.c \
+        -o /tmp/crc24a_table_vec.o
+
+GCC reported:
+
+    kernels/crc24a_table.c:47:38: optimized: loop vectorized using 32 byte vectors
+
+Line 47 corresponds to the loop that initializes the 256-entry CRC
+lookup table. The table entries are independent of one another, so
+this initialization work can be vectorized.
+
+The main CRC processing loop was analyzed separately using:
+
+    gcc -O3 -march=native -fopt-info-vec-missed \
+        -c kernels/crc24a_table.c \
+        -o /tmp/crc24a_table_vec_missed.o
+
+GCC reported that the main byte-processing loop could not be
+vectorized:
+
+    kernels/crc24a_table.c:80:26: missed: couldn't vectorize loop
+    kernels/crc24a_table.c:85:19: missed: not vectorized: unsupported use in stmt.
+
+The remaining-bit loop was also not vectorized.
+
+Assembly inspection confirmed this behavior. The lookup-table
+initialization contains 256-bit YMM instructions such as:
+
+    vpslld
+    vpsrld
+    vpcmpeqd
+    vpand
+    vpxor
+    vpblendvb
+    vmovdqa
+
+These instructions demonstrate that GCC generated AVX2 code for the
+independent table-initialization work.
+
+In contrast, the main CRC processing loop uses scalar registers and
+per-byte table lookups. The updated CRC value is fed directly into
+the next iteration:
+
+    current CRC
+        ↓
+    table index calculation
+        ↓
+    table lookup
+        ↓
+    new CRC
+        ↓
+    next iteration
+
+This creates a loop-carried dependency between successive CRC
+iterations. Consequently, the straightforward byte-oriented
+implementation does not expose enough independent work for ordinary
+AVX2 loop vectorization.
+
+The result does not imply that CRC algorithms cannot be parallelized
+with SIMD. More advanced approaches, such as CRC folding, can
+restructure the computation into partially independent blocks.
+However, such techniques are substantially different from directly
+vectorizing the current loop.
+
+For this project, the lookup-table transformation is therefore treated
+as the primary optimization for the CRC24A kernel. The AVX2 analysis
+also demonstrates an important performance-engineering principle:
+SIMD optimization depends on the dependency structure of the
+algorithm, and not every kernel benefits equally from straightforward
+vectorization.
