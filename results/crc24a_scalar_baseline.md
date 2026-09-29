@@ -485,3 +485,223 @@ The result also demonstrates that memory footprint and execution
 throughput are separate optimization considerations. A smaller data
 representation does not necessarily produce higher throughput when the
 computation remains dependent on sequential CRC state updates.
+
+## Lookup-Table Optimization
+
+### Motivation
+
+The scalar CRC24A implementation processes one input bit at a time.
+Because each CRC update depends on the previous CRC state, the inner
+loop contains a serial dependency chain.
+
+Loop unrolling was evaluated previously, but it did not provide a
+meaningful performance improvement.
+
+The next optimization replaces eight individual bit-level CRC updates
+for each complete input byte with a precomputed lookup table.
+
+### Lookup-Table Design
+
+A table containing 256 entries is constructed.
+
+Each entry represents the CRC contribution produced by processing one
+possible 8-bit input byte starting from a CRC state of zero.
+
+For a complete input byte, the implementation calculates a table index
+from:
+
+    ((crc >> 16) ^ byte) & 0xFF
+
+The CRC state is then updated using:
+
+    crc =
+        ((crc << 8) & CRC24A_MASK)
+        ^ crc24a_table[table_index]
+
+This changes the main processing loop from bit-at-a-time processing to
+byte-at-a-time processing.
+
+The lookup table contains:
+
+    256 entries × 4 bytes = 1024 bytes
+
+Therefore, the complete table occupies approximately 1 KiB.
+
+Any remaining input bits that do not form a complete byte are processed
+using the original bit-by-bit CRC update.
+
+### Correctness Validation
+
+The lookup-table implementation was first validated against the
+established CRC24A test vector:
+
+    Input: 123456789
+    CRC24A: 0xCDE703
+
+The lookup-table result matched the scalar implementation.
+
+A dedicated scalar-versus-table cross-validation test was then used
+with 26 different input lengths:
+
+    0, 1, 7, 8, 9, 15, 16, 17,
+    31, 32, 33, 63, 64, 65,
+    127, 128, 129, 255, 256, 257,
+    1023, 1024, 1025, 4095, 4096, 32768 bits
+
+The test included both byte-aligned and non-byte-aligned input lengths.
+
+All 26 tests produced identical CRC results between the scalar and
+lookup-table implementations.
+
+### Benchmark Configuration
+
+The same benchmark methodology used for the scalar baseline was used.
+
+    Input size:          1,048,576 bits
+    Input storage:       131,072 bytes
+    Iterations/sample:   100
+    Samples:             10
+    Timer:               clock_gettime(CLOCK_MONOTONIC)
+
+### Benchmark Result
+
+Lookup-table CRC24A benchmark:
+
+    Minimum time:         0.024282 s
+    Average time:         0.025291 s
+    Maximum time:         0.030651 s
+
+    Minimum throughput:   3.421 Gbit/s
+    Average throughput:   4.146 Gbit/s
+    Maximum throughput:   4.318 Gbit/s
+
+    Checksum:             0x000000
+
+The average lookup-table throughput was approximately 4.146 Gbit/s.
+
+Compared with the scalar -O3 baseline of 1.153 Gbit/s:
+
+    Speedup = 4.146 / 1.153
+           ≈ 3.60×
+
+Thus, the lookup-table implementation provided approximately a
+3.6× throughput improvement over the scalar baseline.
+
+### Comparison of CRC Implementations
+
+| Implementation | Average Throughput | Relative to Scalar |
+|---|---:|---:|
+| Scalar -O3 | 1.153 Gbit/s | 1.00× |
+| Packed-bit | 1.111 Gbit/s | 0.96× |
+| Packed-byte | 1.145 Gbit/s | 0.99× |
+| Loop unrolled | 1.117 Gbit/s | 0.97× |
+| Lookup table | 4.146 Gbit/s | 3.60× |
+
+The packed representations and manual loop unrolling did not provide a
+meaningful improvement over the scalar baseline under the current
+benchmark conditions.
+
+The lookup-table implementation produced a substantially larger
+performance improvement because it reduces the amount of bit-level CRC
+computation performed for each input byte.
+
+### Profiling
+
+The lookup-table implementation was profiled using Linux perf.
+
+System-level counters:
+
+    Task-clock:          265.05 ms
+    Context-switches:    0
+    CPU migrations:      0
+    Page faults:         92
+
+The absence of context switches and CPU migrations indicates that the
+measured run was not significantly affected by scheduler movement.
+
+Because the processor is a hybrid Intel CPU with separate P-core and
+E-core performance monitoring units, instruction and cache counters
+were reported separately by perf.
+
+Combined instruction count:
+
+    CPU atom instructions: 866,338,664
+    CPU core instructions: 1,497,643,804
+
+    Total: 2,363,982,468 instructions
+
+The benchmark processes:
+
+    1,048,576 bits × 100 iterations × 10 samples
+    = 1,048,576,000 logical bits
+
+This corresponds to approximately:
+
+    2.364 billion / 1.049 billion
+    ≈ 2.25 instructions per logical bit
+
+The earlier scalar profiling measurement was approximately 15.9
+instructions per logical bit.
+
+This large reduction in instruction count is consistent with the
+byte-oriented lookup-table algorithm replacing repeated bit-level CRC
+updates with a table lookup and byte-level state update.
+
+### Branch Behavior
+
+Combined branch count:
+
+    78,695,406 + 136,156,141
+    = 214,851,547 branches
+
+Combined branch misses:
+
+    26,392 + 1,690
+    = 28,082 branch misses
+
+The resulting branch-miss rate is approximately:
+
+    28,082 / 214,851,547 × 100
+    ≈ 0.013%
+
+The very low branch-miss rate indicates that branch misprediction is
+not a significant performance limitation for this implementation.
+
+### Cache Considerations
+
+The lookup table occupies approximately 1 KiB:
+
+    256 entries × 4 bytes = 1024 bytes
+
+This is small compared with the processor cache capacity, so the table
+does not require a large memory footprint.
+
+The optimization therefore trades additional table-based memory
+accesses for substantially less bit-level computation.
+
+The exact cache-reference and cache-miss counters should be interpreted
+carefully because the Intel Core i7-12700 uses a hybrid P-core/E-core
+architecture and perf reports separate PMU domains.
+
+### Interpretation
+
+The lookup-table optimization demonstrates that a significant CRC
+performance improvement can be obtained without SIMD by changing the
+granularity of the computation.
+
+The scalar implementation processes one bit per CRC update, while the
+lookup-table implementation processes a complete byte using one
+precomputed table contribution.
+
+The measured result increased from approximately 1.153 Gbit/s to
+4.146 Gbit/s, corresponding to approximately a 3.6× throughput
+improvement.
+
+The profiling results support this explanation: the estimated
+instruction count per logical bit decreased from approximately 15.9
+for the scalar implementation to approximately 2.25 for the
+lookup-table implementation.
+
+This optimization provides a useful reference point for subsequent
+CRC experiments involving SIMD, multithreading, and memory/cache
+behavior.
