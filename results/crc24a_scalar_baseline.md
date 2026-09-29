@@ -232,3 +232,143 @@ same workload and repeated-sample methodology.
 The average throughput of 1.153 Gbit/s is used as the current
 representative scalar -O3 measurement, while the minimum and maximum
 observations provide context for measurement variability.
+
+---
+
+## 10. Phase 3 Profiling
+
+The CRC24A scalar `-O3` benchmark was profiled using Linux `perf`.
+
+### 10.1 System-level profiling
+
+The following counters were available:
+
+    task-clock
+    context-switches
+    cpu-migrations
+    page-faults
+
+Measured results:
+
+| Counter | Result |
+|---------|-------:|
+| Task-clock | 899.36 ms |
+| Context switches | 0 |
+| CPU migrations | 0 |
+| Page faults | 318 |
+| Wall-clock time | 900.55 ms |
+| User CPU time | 897.35 ms |
+| System CPU time | 3.00 ms |
+
+The task-clock and wall-clock times were very close, indicating that
+the benchmark spent almost all of its execution time actively using
+the CPU rather than waiting.
+
+No context switches or CPU migrations occurred during this particular
+measurement.
+
+The observed page faults are associated with normal process and memory
+initialization and are not considered evidence of a CRC computation
+bottleneck.
+
+### 10.2 Instruction, branch, and cache profiling
+
+The following hardware events were measured:
+
+    instructions
+    branches
+    branch-misses
+    cache-references
+    cache-misses
+
+Because the Intel Core i7-12700 uses a hybrid P-core/E-core architecture,
+Linux `perf` reports these events separately as `cpu_core` and `cpu_atom`.
+
+Combined measurements were approximately:
+
+| Metric | Combined result |
+|--------|----------------:|
+| Instructions | 16.70 billion |
+| Branches | 1.274 billion |
+| Branch misses | 185 thousand |
+| Cache references | 5.13 million |
+| Cache misses | 122 thousand |
+
+The benchmark processed approximately 1.049 billion logical input bits
+during the profiling run. The instruction count therefore corresponds
+to approximately 15.9 instructions per logical input bit.
+
+The measured branch-miss count was very small relative to the total
+number of branches. Therefore, branch misprediction does not appear
+to be a major performance bottleneck in this implementation.
+
+Cache misses were also relatively limited in the measured counters.
+Further cache analysis will be performed later as part of the project's
+memory and cache optimization phase.
+
+### 10.3 Compiler-generated assembly
+
+The `-O3` executable was inspected using:
+
+    objdump -d -M intel ./tests/benchmark_crc24a_scalar_O3
+
+The generated CRC loop uses a conditional move (`cmovne`) rather than
+a conditional branch for the polynomial XOR operation.
+
+This corresponds to the source-level operation:
+
+    if (top_bit ^ bit)
+    {
+        crc ^= CRC24A_POLY;
+    }
+
+The compiler therefore already removes the unpredictable branch from
+the hot loop.
+
+The generated loop processes one logical input bit per iteration and
+maintains a loop-carried CRC state. Each iteration depends on the CRC
+state produced by the previous iteration.
+
+This dependency is important for future SIMD optimization because the
+CRC state cannot simply be divided into independent operations on
+individual bits without additional polynomial-based techniques.
+
+### 10.4 Input representation observation
+
+The scalar baseline represents each logical input bit using one
+`uint8_t` element containing either `0` or `1`.
+
+Therefore, an input of:
+
+    1,048,576 logical bits
+
+currently occupies:
+
+    1,048,576 bytes
+
+This is an intentionally simple representation for the baseline.
+A packed-bit representation would reduce the input storage requirement
+by approximately 8×.
+
+The effect of data representation, memory bandwidth, and cache behavior
+will be investigated later in the memory/cache optimization phase.
+
+### 10.5 Profiling conclusions
+
+The profiling results establish the following baseline observations:
+
+1. The CRC kernel is primarily CPU-computation dominated.
+2. Scheduling interference was negligible during the measured run.
+3. Branch misprediction is not a significant bottleneck in the current
+   scalar implementation.
+4. GCC `-O3` already converts the conditional CRC update into a
+   conditional move.
+5. The CRC state creates a loop-carried dependency between iterations.
+6. The current one-byte-per-bit representation is simple but
+   memory-inefficient compared with packed bits.
+7. Straightforward bit-by-bit AVX2 vectorization is therefore not
+   expected to be sufficient; any SIMD optimization must account for
+   the CRC state dependency.
+
+These observations will guide the optimization work in the subsequent
+phases.
