@@ -8,6 +8,7 @@ uint32_t crc24a(const uint8_t *bits, size_t nbits);
 
 #define INPUT_BITS (1024u * 1024u)
 #define ITERATIONS 100u
+#define SAMPLES 10u
 
 static double elapsed_seconds(
     const struct timespec *start,
@@ -32,34 +33,67 @@ int main(void)
         bits[i] = (uint8_t)(i & 1u);
     }
 
+    double min_seconds = 1e100;
+    double max_seconds = 0.0;
+    double total_seconds = 0.0;
+
     uint32_t result = 0u;
 
-    struct timespec start;
-    struct timespec end;
-
-    clock_gettime(CLOCK_MONOTONIC, &start);
-
-    for (unsigned int i = 0; i < ITERATIONS; i++)
+    for (unsigned int sample = 0; sample < SAMPLES; sample++)
     {
-        result ^= crc24a(bits, INPUT_BITS);
+        struct timespec start;
+        struct timespec end;
+
+        clock_gettime(CLOCK_MONOTONIC, &start);
+
+        for (unsigned int i = 0; i < ITERATIONS; i++)
+        {
+            result ^= crc24a(bits, INPUT_BITS);
+        }
+
+        clock_gettime(CLOCK_MONOTONIC, &end);
+
+        double seconds = elapsed_seconds(&start, &end);
+
+        if (seconds < min_seconds)
+        {
+            min_seconds = seconds;
+        }
+
+        if (seconds > max_seconds)
+        {
+            max_seconds = seconds;
+        }
+
+        total_seconds += seconds;
     }
 
-    clock_gettime(CLOCK_MONOTONIC, &end);
-
-    double total_seconds = elapsed_seconds(&start, &end);
+    double average_seconds =
+        total_seconds / (double)SAMPLES;
 
     double total_bits =
         (double)INPUT_BITS * (double)ITERATIONS;
 
-    double throughput_gbps =
-        total_bits / total_seconds / 1e9;
+    double min_throughput =
+        total_bits / max_seconds / 1e9;
+
+    double average_throughput =
+        total_bits / average_seconds / 1e9;
+
+    double max_throughput =
+        total_bits / min_seconds / 1e9;
 
     printf("CRC24A scalar benchmark\n");
-    printf("Input size:       %u bits\n", INPUT_BITS);
-    printf("Iterations:       %u\n", ITERATIONS);
-    printf("Total time:       %.6f s\n", total_seconds);
-    printf("Throughput:       %.3f Gbit/s\n", throughput_gbps);
-    printf("Checksum:         0x%06X\n", result);
+    printf("Input size:          %u bits\n", INPUT_BITS);
+    printf("Iterations/sample:   %u\n", ITERATIONS);
+    printf("Samples:              %u\n", SAMPLES);
+    printf("Minimum time:         %.6f s\n", min_seconds);
+    printf("Average time:         %.6f s\n", average_seconds);
+    printf("Maximum time:         %.6f s\n", max_seconds);
+    printf("Minimum throughput:   %.3f Gbit/s\n", min_throughput);
+    printf("Average throughput:   %.3f Gbit/s\n", average_throughput);
+    printf("Maximum throughput:   %.3f Gbit/s\n", max_throughput);
+    printf("Checksum:             0x%06X\n", result);
 
     free(bits);
 

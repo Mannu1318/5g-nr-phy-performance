@@ -196,3 +196,39 @@ Git tracking.
 
 The benchmark source and experimental documentation are tracked in
 the repository.
+
+---
+
+## 9. Repeated Measurement
+
+To evaluate run-to-run timing variation, the optimized scalar benchmark
+was executed using 10 independent timed samples.
+
+Configuration:
+
+    GCC optimization: -O3
+    Samples: 10
+    Iterations per sample: 100
+    Input size: 1,048,576 bits
+
+Measured results:
+
+| Metric | Result |
+|--------|-------:|
+| Minimum time | 0.087804 s |
+| Average time | 0.090954 s |
+| Maximum time | 0.102485 s |
+| Throughput at maximum time | 1.023 Gbit/s |
+| Average throughput | 1.153 Gbit/s |
+| Throughput at minimum time | 1.194 Gbit/s |
+
+The repeated measurements demonstrate observable run-to-run variation.
+Therefore, a single benchmark execution should not be treated as the
+sole representative performance measurement.
+
+For subsequent optimization comparisons, the benchmark will use the
+same workload and repeated-sample methodology.
+
+The average throughput of 1.153 Gbit/s is used as the current
+representative scalar -O3 measurement, while the minimum and maximum
+observations provide context for measurement variability.
