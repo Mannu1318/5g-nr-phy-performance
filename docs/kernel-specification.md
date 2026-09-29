@@ -235,3 +235,53 @@ The CRC kernel is a standalone computational study.
 It does not attempt to reproduce the complete NR transport-channel processing chain.
 
 The purpose is to isolate CRC computation so that its computational behavior can be measured, profiled, and optimized independently.
+
+
+## Implementation Reference and CRC24A Configuration
+
+The CRC implementation is based on:
+
+3GPP TS 38.212 V19.4.0, Release 19
+Clause 5.1 — CRC calculation
+
+The selected CRC variant is CRC24A.
+
+CRC length:
+
+    L = 24 bits
+
+
+Generator polynomial:
+
+    gCRC24A(D) =
+    D^24 + D^23 + D^18 + D^17 + D^14 + D^11 +
+    D^10 + D^7 + D^6 + D^5 + D^4 + D^3 + D + 1
+
+The corresponding polynomial representation with the leading D^24
+term omitted is:
+          
+      0x864CFB
+
+
+The CRC procedure follows the systematic encoding definition in
+TS 38.212 Clause 5.1. The input bits are denoted a_0 ... a_(A-1)
+and the parity bits are denoted p_0 ... p_(L-1).
+
+The resulting CRC-attached sequence is:
+
+    b_k = a_k
+        for k = 0 ... A-1
+
+    b_k = p_(k-A)
+        for k = A ... A+L-1
+
+For this project, the standalone CRC24A reference implementation will
+operate on an explicitly defined sequence of binary input bits.
+
+The implementation will process the input in the same bit order used
+by the reference test vectors. The bit representation and processing
+convention will be documented alongside the reference implementation
+so that the Python and C implementations use the same definition.
+
+Correctness will first be established using the Python reference
+implementation before the optimized C implementation is developed.
