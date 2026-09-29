@@ -372,3 +372,116 @@ The profiling results establish the following baseline observations:
 
 These observations will guide the optimization work in the subsequent
 phases.
+
+## 11. Packed-Bit Representation Experiment
+
+A packed-bit CRC implementation was evaluated as a data-layout
+optimization experiment.
+
+The original scalar implementation stores each logical bit in one
+byte. The packed implementation stores eight logical bits per byte.
+
+Therefore, for the same 1,048,576-bit workload:
+
+| Representation | Input storage |
+|----------------|---------------:|
+| Scalar | 1,048,576 bytes |
+| Packed | 131,072 bytes |
+
+The packed representation reduces input storage by a factor of 8.
+
+### Benchmark Configuration
+
+    GCC optimization: -O3
+    Input size: 1,048,576 logical bits
+    Iterations per sample: 100
+    Samples: 10
+
+### Results
+
+| Metric | Scalar -O3 | Packed -O3 |
+|--------|------------:|-----------:|
+| Average throughput | 1.153 Gbit/s | 1.111 Gbit/s |
+| Input storage | 1,048,576 bytes | 131,072 bytes |
+
+The packed implementation produced the same CRC24A correctness result as
+the established reference and scalar implementation:
+
+    CRC24A = 0xCDE703
+
+However, the packed implementation achieved lower average throughput
+than the scalar representation.
+
+The packed implementation requires additional operations to extract each
+individual bit from the packed byte stream, including byte-index
+calculation, bit-position calculation, shifting, and masking.
+
+Therefore, the reduction in memory footprint did not translate directly
+into improved execution time.
+
+The measured packed-to-scalar throughput ratio was approximately:
+
+    1.111 / 1.153 = 0.964
+
+Thus, the packed implementation achieved approximately 96.4% of the
+scalar -O3 throughput in this experiment.
+
+This result demonstrates that reduced memory footprint alone does not
+guarantee higher performance. The cost of extracting individual bits
+must also be considered.
+
+This experiment is retained as a baseline for subsequent packed-byte
+optimization, where multiple bits will be processed together rather than
+performing byte-index and bit-index calculations for every logical bit.
+
+## 12. Packed-Byte CRC Experiment
+
+A second packed representation was evaluated to reduce the overhead
+observed in the initial packed-bit implementation.
+
+The input remains packed at eight logical bits per byte, but the
+implementation processes the input one byte at a time and performs the
+eight CRC bit operations within that byte. This removes the explicit
+byte-index and modulo calculations from the per-bit loop used by the
+previous packed implementation.
+
+### Results
+
+| Implementation | Average throughput | Input storage |
+|----------------|-------------------:|--------------:|
+| Scalar -O3 | 1.153 Gbit/s | 1,048,576 bytes |
+| Packed-bit -O3 | 1.111 Gbit/s | 131,072 bytes |
+| Packed-byte -O3 | 1.145 Gbit/s | 131,072 bytes |
+
+The packed-byte implementation produced the same CRC24A result as the
+reference implementation:
+
+    CRC24A = 0xCDE703
+
+Compared with the packed-bit implementation, the packed-byte version
+improved average throughput from 1.111 Gbit/s to 1.145 Gbit/s.
+
+The packed-byte implementation reached approximately:
+
+    1.145 / 1.153 = 0.993
+
+of the scalar -O3 throughput.
+
+Therefore, the packed-byte implementation was approximately 0.7% below
+the measured scalar baseline. This difference is small relative to the
+run-to-run variation observed during repeated benchmarking.
+
+The experiment shows that processing the packed input one byte at a time
+removes much of the indexing overhead introduced by the first packed
+implementation. However, it does not produce a significant performance
+improvement because the CRC calculation still processes the CRC state
+serially, one input bit after another.
+
+The packed-byte representation nevertheless reduces input storage by a
+factor of 8 and provides a more efficient packed representation than the
+initial per-bit indexing implementation.
+
+The result also demonstrates that memory footprint and execution
+throughput are separate optimization considerations. A smaller data
+representation does not necessarily produce higher throughput when the
+computation remains dependent on sequential CRC state updates.
