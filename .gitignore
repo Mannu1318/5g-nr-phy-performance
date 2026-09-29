@@ -10,4 +10,5 @@ build/
 .DS_Store
 tests/test_*
 tests/benchmark_*
+!tests/test_*.c
 !tests/benchmark_*.c
