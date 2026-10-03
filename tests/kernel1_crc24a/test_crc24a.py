@@ -1,4 +1,4 @@
-from kernels.crc24a_reference import crc24a
+from kernels.kernel1_crc24a.crc24a_reference import crc24a
 
 
 def bytes_to_bits(data):
