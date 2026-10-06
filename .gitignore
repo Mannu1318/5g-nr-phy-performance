@@ -12,3 +12,11 @@ tests/test_*
 tests/benchmark_*
 !tests/test_*.c
 !tests/benchmark_*.c
+
+# perf profiling data
+perf.data
+perf.data.old
+
+# Compiled LFSR derivation test binaries
+tests/derive_lfsr_*
+!tests/derive_lfsr_*.c

@@ -1,0 +1,92 @@
+#define _POSIX_C_SOURCE 200809L
+
+#include <stdint.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <time.h>
+
+#define BENCHMARK_LENGTH 1000000U
+#define BENCHMARK_ITERATIONS 100
+
+void generate_gold_sequence_packed_bits(
+    uint8_t *output,
+    size_t length,
+    uint32_t c_init
+);
+
+static double elapsed_seconds(
+    const struct timespec *start,
+    const struct timespec *end
+)
+{
+    return (double)(end->tv_sec - start->tv_sec)
+         + (double)(end->tv_nsec - start->tv_nsec) / 1e9;
+}
+
+int main(void)
+{
+    size_t output_bytes =
+        (BENCHMARK_LENGTH + 7U) / 8U;
+
+    uint8_t *sequence =
+        malloc(output_bytes);
+
+    if (sequence == NULL) {
+        fprintf(stderr, "Memory allocation failed\n");
+        return 1;
+    }
+
+    uint32_t c_init = 0x091A0155;
+
+    /* Warm-up */
+    generate_gold_sequence_packed_bits(
+        sequence,
+        BENCHMARK_LENGTH,
+        c_init
+    );
+
+    struct timespec start;
+    struct timespec end;
+
+    clock_gettime(CLOCK_MONOTONIC, &start);
+
+    for (int i = 0; i < BENCHMARK_ITERATIONS; i++) {
+        generate_gold_sequence_packed_bits(
+            sequence,
+            BENCHMARK_LENGTH,
+            c_init
+        );
+    }
+
+    clock_gettime(CLOCK_MONOTONIC, &end);
+
+    double elapsed =
+        elapsed_seconds(&start, &end);
+
+    double total_bits =
+        (double)BENCHMARK_LENGTH *
+        BENCHMARK_ITERATIONS;
+
+    double throughput =
+        total_bits / elapsed / 1e6;
+
+    printf("Kernel 2 — Packed-Bit Gold Sequence Benchmark\n");
+    printf("Sequence length   : %u bits\n",
+           BENCHMARK_LENGTH);
+    printf("Iterations        : %d\n",
+           BENCHMARK_ITERATIONS);
+    printf("Total bits        : %.0f\n",
+           total_bits);
+    printf("Output bytes      : %zu\n",
+           output_bytes);
+    printf("Elapsed time      : %.6f s\n",
+           elapsed);
+    printf("Throughput        : %.2f Mbit/s\n",
+           throughput);
+    printf("Output sample     : 0x%02X\n",
+           sequence[0]);
+
+    free(sequence);
+
+    return 0;
+}
