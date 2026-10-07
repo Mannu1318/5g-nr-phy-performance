@@ -1,24 +1,69 @@
-# 5G NR Layer-1 PHY Performance Analysis and Optimization
+# Simplified 5G NR PHY End-to-End Performance Engineering
 
 ## 1. Project Objective
 
-The objective of this project is to study the performance characteristics of selected 5G New Radio (NR) Layer-1 Physical (PHY) processing kernels on a general-purpose Intel Core i7-12700 processor.
+The objective of this project is to design, implement, validate, measure, profile, and optimize a simplified end-to-end 5G New Radio (NR) Layer-1 Physical (PHY) processing chain on a general-purpose Intel Core i7-12700 processor.
 
-The project follows the performance-analysis concepts used in Intel FlexRAN reference architectures, while implementing selected PHY computational kernels independently rather than reproducing the complete FlexRAN software stack.
+The project evolved from studying individual PHY computational kernels into an integrated transmitter and receiver processing chain, with emphasis on understanding how the stages interact while applying systematic performance engineering techniques.
 
 The main goals are:
-
-1. Implement correct scalar reference versions of selected 5G NR PHY kernels.
-2. Validate the implementations using deterministic test cases and reference results.
-3. Measure baseline execution time and throughput.
-4. Profile the implementations to identify computational hotspots.
-5. Optimize selected kernels using AVX2 SIMD instructions.
-6. Study the effects of multithreading and CPU-core placement.
-7. Investigate memory access patterns, cache behavior, and data layout.
-8. Perform a controlled parameter sweep to understand how workload size affects performance.
-9. Compare scalar, optimized, and parallel implementations using reproducible measurements.
+1. Implement correct reference and optimized versions of the major stages in the simplified 5G NR PHY transmitter and receiver chain.
+2. Validate individual stages using deterministic test cases and reference results.
+3. Integrate the stages into a functional end-to-end TX/channel/RX processing flow.
+4. Measure baseline execution time, throughput, and end-to-end performance.
+5. Profile the implementation to identify computational hotspots and performance bottlenecks.
+6. Optimize selected computationally intensive stages using AVX2 SIMD instructions and other suitable techniques.
+7. Study the effects of multithreading, CPU-core placement, memory access patterns, cache behavior, and data layout.
+8. Perform controlled parameter sweeps to understand how workload size, modulation, FFT configuration, and other system parameters affect performance.
+9. Compare scalar, optimized, and parallel implementations and evaluate both individual-kernel and complete-chain performance using reproducible measurements.
 
 ---
+## 2. End-to-End PHY Processing Architecture
+
+The project models a simplified end-to-end 5G NR PHY processing chain consisting of transmitter-side processing, a simplified wireless channel, and receiver-side processing. The individual stages are studied independently for performance engineering and are also integrated to evaluate complete-chain behavior.
+
+### 2.1 Transmitter Processing
+
+```text
+Information Bits
+      ↓
+CRC Attachment
+      ↓
+Bit Scrambling
+      ↓
+QAM Mapping
+      ↓
+OFDM / IFFT
+      ↓
+2×2 MIMO Transmission
+      ↓
+Simplified Channel
+```
+
+### 2.2 Receiver Processing
+
+```text
+Received Signal
+      ↓
+Channel Estimation
+      ↓
+2×2 MIMO Zero-Forcing Detection
+      ↓
+OFDM / FFT
+      ↓
+QAM Demapping
+      ↓
+Bit Descrambling
+      ↓
+CRC Verification
+      ↓
+Recovered Bits
+```
+
+The receiver reconstructs the transmitted information bits by reversing the corresponding transmitter operations. Bit scrambling and descrambling use the self-inverse XOR operation, while CRC verification provides an integrity check on the recovered information bits.
+
+This architecture is intentionally simplified for performance-engineering study. It is not intended to represent a complete production-grade or fully 3GPP-compliant 5G NR modem implementation.
+
 
 ## 2. Hardware and Software Environment
 
@@ -60,196 +105,224 @@ Python will primarily be used for reference implementations, validation, experim
 
 C/C++ will be used for performance-oriented kernel implementations and optimization experiments.
 
----
 
-## 3. Selected PHY Kernels
+## 3. Selected PHY Processing Kernels
 
-The project focuses on six computational kernels representing different classes of PHY processing workloads.
+The project is organized around six major PHY processing areas that together form a simplified end-to-end transmitter and receiver chain.
+
+Each processing area is studied as an individual computational kernel using the project workflow:
+
+```text
+Understand → Implement → Validate → Measure → Profile → Optimize → Analyze
+```
+
+The kernels are then connected to form the simplified TX/channel/RX processing flow.
 
 ### 3.1 CRC Attach and Check
 
-CRC (Cyclic Redundancy Check) processing will be implemented as a bit-oriented error-detection kernel.
+CRC processing provides error-detection functionality at the transmitter and receiver.
 
-The transmitter-side operation will generate and attach the CRC, while the receiver-side operation will verify the CRC.
+At the transmitter:
 
-The primary performance characteristics of interest are:
+Information Bits → CRC Generation → CRC Attachment
 
-* Bit-level operations
-* XOR and shift operations
-* Loop efficiency
-* Memory access
-* Potential SIMD or word-oriented optimization
+At the receiver:
 
-Correctness will be verified against deterministic reference results.
+Recovered Bits → CRC Verification → Valid/Invalid Result
 
----
+The project uses the CRC24A algorithm specified for 5G NR in 3GPP TS 38.212, Clause 5.1.
 
-### 3.2 Bit Scrambling
+The CRC kernel has already been implemented, validated, benchmarked, profiled, and optimized as Kernel 1.
 
-The scrambling kernel will apply a deterministic pseudorandom sequence to an input bit stream using XOR operations.
+Performance analysis includes:
 
-The corresponding descrambling operation will be used during validation to verify that the original data can be recovered.
+Bit-level operations
+XOR and shift operations
+Loop efficiency
+Memory access
+Lookup-table optimization
+SIMD/AVX2 investigation
+### 3.2 Bit Scrambling and Descrambling
 
-The main performance characteristics are:
+Bit scrambling is applied after CRC attachment at the transmitter.
 
-* Repetitive XOR operations
-* Bit/byte representation
-* Memory bandwidth
-* Data layout
-* SIMD optimization opportunities
+The corresponding descrambling operation is performed at the receiver.
 
-The exact 5G NR scrambling sequence and parameterization will be specified when the kernel implementation is defined.
+TX: Information + CRC → Scrambling → Scrambled Bits
+RX: Descrambling → Recovered Bits
 
----
+The scrambling sequence uses the 5G NR pseudorandom sequence defined in 3GPP TS 38.211.
 
+Scrambling and descrambling use XOR operations. Since XOR is self-inverse, applying the same sequence again recovers the original bits.
+
+The scrambling kernel has already been implemented, validated, benchmarked, profiled, and optimized as Kernel 2.
+
+Performance analysis includes:
+
+LFSR sequence generation
+XOR operations
+Bit/byte representation
+Memory access
+Data layout
+SIMD optimization opportunities
 ### 3.3 QAM Mapping and Demapping
 
-The QAM kernel will convert groups of input bits into complex modulation symbols and perform the reverse operation during demapping.
+QAM processing converts groups of bits into complex-valued modulation symbols at the transmitter and performs the reverse operation at the receiver.
 
-The project will examine:
-
-* QPSK
-* 16-QAM
-* 64-QAM
-* 256-QAM
-
-The main performance characteristics are:
-
-* Bit-to-symbol conversion
-* Lookup or arithmetic operations
-* Complex I/Q data processing
-* Branch behavior
-* Data layout
-* SIMD opportunities
-
-Mapping and demapping correctness will be verified using known input/output vectors and round-trip tests.
-
----
-
-### 3.4 OFDM FFT/IFFT
-
-The OFDM kernel will implement the frequency-domain to time-domain and time-domain to frequency-domain transformations required by an OFDM processing chain.
-
-The main computational operations are FFT and IFFT.
+TX: Bits → QAM Mapping → Complex Symbols
+RX: Complex Symbols → QAM Demapping → Bits
 
 The project will investigate:
 
-* Different FFT sizes
-* Execution time
-* Computational scaling
-* Memory access patterns
-* Cache effects
-* SIMD optimization
+QPSK
+16-QAM
+64-QAM
+256-QAM
 
-The implementation will be treated as a numerical processing kernel rather than a complete 5G NR OFDM transmitter or receiver.
+Performance analysis will include:
 
----
+Bit-to-symbol conversion
+Symbol-to-bit conversion
+Lookup-table versus arithmetic approaches
+Complex I/Q processing
+Branch behavior
+Data layout
+SIMD opportunities
 
-### 3.5 Simple LS Channel Estimation
+Correctness will be validated using deterministic vectors and mapping/demapping round-trip tests.
 
-A simplified Least-Squares (LS) channel-estimation kernel will be implemented using known reference symbols.
+### 3.4 OFDM FFT/IFFT
 
-The simplified model is:
+OFDM processing connects the frequency-domain modulation symbols with the time-domain waveform.
 
-```
+At the transmitter:
+
+Frequency-Domain Symbols → IFFT → Time-Domain Samples
+
+At the receiver:
+
+Time-Domain Samples → FFT → Frequency-Domain Symbols
+
+The project will investigate:
+
+Different FFT sizes
+FFT/IFFT execution time
+Computational scaling
+Memory access patterns
+Cache behavior
+SIMD optimization opportunities
+
+The implementation is intended as a simplified numerical OFDM kernel rather than a complete 3GPP NR waveform implementation.
+
+### 3.5 Channel Estimation
+
+Channel estimation is performed at the receiver using known reference symbols.
+
+The simplified channel model is:
+
 y = h x + n
-```
 
 where:
 
-* `x` is the transmitted reference symbol,
-* `h` is the channel coefficient,
-* `n` is noise,
-* `y` is the received symbol.
+x is the transmitted reference symbol,
+h is the channel coefficient,
+n is noise,
+y is the received symbol.
 
-For a simplified single-channel case, the channel estimate can be expressed as:
+For a simplified single-channel case:
 
-```
 h_hat = y / x
-```
 
 for non-zero known reference symbols.
 
-The project will focus on the computational characteristics of repeated complex-valued channel estimation rather than implementing every detail of a complete 5G NR reference-signal processing chain.
+The kernel will focus on repeated complex-valued channel-estimation operations and their performance characteristics rather than implementing every detail of complete 5G NR reference-signal processing.
 
----
+### 3.6 2×2 MIMO Transmission and Zero-Forcing Detection
 
-### 3.6 2x2 MIMO Zero-Forcing Detection
+The MIMO stage models transmission over two spatial streams and receiver-side zero-forcing detection.
 
-A 2x2 MIMO zero-forcing detection kernel will be implemented to study a small complex-valued linear-algebra workload.
+The simplified system model is:
 
-The simplified MIMO model is:
-
-```
 Y = H X + N
-```
 
 where:
 
-* `H` is the channel matrix,
-* `X` is the transmitted vector,
-* `N` is noise,
-* `Y` is the received vector.
+H is the 2×2 channel matrix,
+X is the transmitted symbol vector,
+N is noise,
+Y is the received vector.
 
-The zero-forcing detector will estimate the transmitted vector using the channel matrix.
+At the transmitter, two spatial streams are formed for 2×2 MIMO transmission.
 
-The kernel will be used to investigate:
+At the receiver, the zero-forcing detector estimates the transmitted vector using the channel matrix:
 
-* Complex multiplication
-* Complex addition/subtraction
-* Matrix operations
-* Small-matrix inversion or equivalent processing
-* SIMD opportunities
-* Data layout
-* Repeated linear-algebra workloads
+X_hat ≈ H⁻¹ Y
 
-The project specifically limits this study to a 2x2 MIMO configuration.
+The kernel will investigate:
 
----
+Complex multiplication
+Complex addition/subtraction
+Small-matrix operations
+Matrix inversion or equivalent processing
+Data layout
+SIMD opportunities
+Repeated linear-algebra workloads
+
+The study is limited to a simplified 2×2 MIMO configuration.
 
 ## 4. Scope of the Study
 
 ### 4.1 In Scope
 
-The following activities are included:
+The project includes the implementation, integration, validation, measurement, and optimization of a simplified end-to-end 5G NR PHY processing chain.
 
-* Scalar reference implementations
-* Correctness validation
-* Deterministic test vectors
+The main activities include:
+
+* Python reference implementations for algorithm development and validation
+* Scalar C implementations for performance measurement
+* Transmitter-side processing from information bits to a simplified transmitted waveform
+* Receiver-side processing from received samples to recovered information bits
+* CRC generation and receiver-side CRC verification
+* Bit scrambling and receiver-side descrambling
+* QAM mapping and demapping
+* OFDM IFFT and FFT processing
+* Simplified LS channel estimation
+* Simplified 2×2 MIMO transmission and zero-forcing detection
+* Deterministic correctness testing
+* End-to-end round-trip validation
 * Runtime benchmarking
 * Throughput measurement
-* Performance profiling
-* AVX2 optimization
+* Performance profiling using Linux perf
+* AVX2 optimization where applicable
 * Multithreading experiments
 * CPU-core placement experiments
-* Memory-access analysis
-* Cache-related analysis
-* Data-layout experiments
+* Memory-access and data-layout analysis
+* Cache-related performance analysis
 * Workload-size sweeps
 * Comparison of scalar and optimized implementations
 * Reproducible benchmark scripts
-* Visualization and analysis of collected results
+* Visualization and analysis of collected performance results
 
----
+The complete chain is treated as a simplified engineering model rather than a production-grade 5G NR modem.
 
 ### 4.2 Out of Scope
 
 The following are outside the primary scope:
 
+* Complete 3GPP-compliant 5G NR Layer-1 implementation
 * Complete Intel FlexRAN source-code reproduction
 * Hardware FEC acceleration
 * ACC100 accelerator integration
 * FPGA implementation
 * Full O-RAN fronthaul implementation
-* Complete 5G NR Layer-1 implementation
 * Full commercial-grade base-station software
 * Real-time over-the-air 5G transmission
-* Complete protocol-stack implementation
+* Complete 5G NR protocol-stack implementation
+* Complete physical-channel processing for every NR channel
+* Full 3GPP reference-signal implementation
 * Hardware-specific AVX-512 optimization, because AVX-512 is unavailable on the target processor
 
 An optional attempt to build or inspect the official FlexRAN environment may be performed separately, but it is not required for successful completion of the core project.
-
----
 
 ## 5. Correctness Validation Strategy
 
@@ -279,7 +352,8 @@ For numerical kernels such as FFT, channel estimation, and MIMO detection, float
 
 For bit-oriented kernels such as CRC and scrambling, exact equality will normally be required.
 
----
+After individual kernel validation, the integrated TX/channel/RX chain will also be tested using controlled inputs to verify that the receiver can recover the expected information and that the final CRC check succeeds under the simplified channel model.
+
 
 ## 6. Performance Metrics
 
@@ -323,7 +397,6 @@ Linux `perf` will be used where appropriate to examine hardware-level behavior s
 
 The availability and interpretation of individual hardware counters may depend on the processor and Linux performance-monitoring configuration.
 
----
 
 ## 7. Optimization Stages
 
@@ -383,7 +456,6 @@ Investigate:
 
 Combine the previous optimization techniques and evaluate performance across different workload parameters.
 
----
 
 ## 8. Benchmark Parameters
 
@@ -403,7 +475,6 @@ Potential dimensions include:
 
 The exact parameter values will be defined during the benchmark-design stage after the individual kernels and their correctness tests are implemented.
 
----
 
 ## 9. Reproducibility
 
@@ -427,13 +498,14 @@ Benchmark records should include, where applicable:
 
 Raw benchmark results will be stored separately from source code and used to generate plots and summary tables.
 
----
 
 ## 10. Expected Final Outcome
 
-The final project will provide a measured comparison of scalar and optimized implementations of selected 5G NR PHY computational kernels on the Intel Core i7-12700 platform.
+The final project will provide a measured performance study of a simplified end-to-end 5G NR PHY processing chain on the Intel Core i7-12700 platform.
 
-The study is intended to demonstrate how:
+The completed chain will demonstrate the flow from information bits through transmitter-side processing, a controlled channel model, and receiver-side processing to recovered information bits and final CRC verification.
+
+The study will compare scalar and optimized implementations and investigate how:
 
 * Algorithmic structure,
 * SIMD vectorization,
@@ -441,25 +513,26 @@ The study is intended to demonstrate how:
 * CPU placement,
 * memory access,
 * cache behavior,
+* data layout,
 * and workload size
 
-affect the performance of representative PHY processing workloads.
+affect the performance of representative PHY processing stages.
 
-The final results will be presented as reproducible measurements rather than claims of reproducing the performance of a complete Intel FlexRAN deployment.
+The final results will be presented as reproducible measurements. They will describe the behavior of the simplified implementation and will not claim to reproduce the performance of a complete commercial 5G modem or Intel FlexRAN deployment.
 
----
 
 ## 11. Project Success Criteria
 
 The project will be considered successful when:
 
-1. All six selected kernels have working reference/scalar implementations.
-2. Kernel correctness has been validated with deterministic tests.
-3. Baseline performance measurements have been collected.
-4. Significant performance hotspots have been identified through profiling.
-5. At least selected kernels have been optimized using AVX2 where technically appropriate.
-6. Multithreading behavior has been measured.
-7. Memory/cache behavior has been investigated.
-8. Benchmark results have been collected across defined workload parameters.
-9. Results are reproducible using documented scripts and configurations.
-10. The final report clearly distinguishes measured results from assumptions and limitations.
+1. All six selected PHY processing areas have working reference/scalar implementations.
+2. Individual kernel correctness has been validated with deterministic tests.
+3. The transmitter, simplified channel, and receiver stages can be integrated into an end-to-end processing flow.
+4. The receiver can recover the expected information under the defined controlled channel conditions.
+5. Final receiver-side CRC verification succeeds for valid end-to-end test cases.
+6. Baseline performance measurements have been collected for the selected kernels and integrated chain where applicable.
+7. Significant performance hotspots have been identified through profiling.
+8. Selected computationally intensive kernels have been optimized using AVX2 where technically appropriate.
+9. Multithreading, memory access, cache behavior, and workload-size effects have been investigated.
+10. Benchmark results are reproducible using documented scripts and configurations.
+11. The final report clearly distinguishes measured results, assumptions, simplifications, and limitations of the study.
