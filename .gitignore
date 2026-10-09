@@ -20,3 +20,16 @@ perf.data.old
 # Compiled LFSR derivation test binaries
 tests/derive_lfsr_*
 !tests/derive_lfsr_*.c
+# Kernel 3 QAM compiled test and benchmark binaries
+tests/kernel3_qam/test_qpsk_c
+tests/kernel3_qam/test_qam*_c
+tests/kernel3_qam/test_qam_cross_validation
+tests/kernel3_qam/benchmark_qam
+tests/kernel3_qam/benchmark_qam_separate
+tests/kernel3_qam/benchmark_qam256_demap
+tests/kernel3_qam/benchmark_qam256_demap_baseline
+tests/kernel3_qam/benchmark_qam256_demap_optimized
+tests/kernel3_qam/benchmark_qam256_packed
+tests/kernel3_qam/benchmark_qam256_packed_end_to_end
+tests/kernel3_qam/qam256_demap_experiment
+tests/kernel3_qam/qam256_packed_experiment
