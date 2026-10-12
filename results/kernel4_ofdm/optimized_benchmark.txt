@@ -1,0 +1,22 @@
+Kernel 4: OFDM FFT/IFFT repeated-sample benchmark
+Warm-up iterations per transform: 100
+Iterations per sample: 2000
+Independent samples per transform: 7
+
+FFT size   Type          Median (ns)     Minimum (ns)
+--------------------------------------------------------
+64         FFT               1318.06           737.34
+64         IFFT               796.12           789.74
+128        FFT               1540.41          1529.36
+128        IFFT              1680.25          1671.66
+256        FFT               3254.56          3245.73
+256        IFFT              3485.43          3478.00
+512        FFT               6784.74          6765.56
+512        IFFT              7385.95          7380.93
+1024       FFT              14370.29         14352.45
+1024       IFFT             15471.04         15446.57
+2048       FFT              30908.53         30393.77
+2048       IFFT             33359.42         32382.60
+
+Result sink: 3.516229731312e-26
+Benchmark completed successfully.

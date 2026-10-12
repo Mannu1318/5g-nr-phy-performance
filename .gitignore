@@ -33,3 +33,13 @@ tests/kernel3_qam/benchmark_qam256_packed
 tests/kernel3_qam/benchmark_qam256_packed_end_to_end
 tests/kernel3_qam/qam256_demap_experiment
 tests/kernel3_qam/qam256_packed_experiment
+# Python test coverage
+.coverage
+htmlcov/
+# Kernel 4 OFDM compiled test and profiling binaries
+tests/kernel4_ofdm/test_ofdm
+profiling/kernel4_ofdm/benchmark_ofdm
+profiling/kernel4_ofdm/profile_fft
+
+# Kernel 4 raw perf recordings
+results/kernel4_ofdm/*.data

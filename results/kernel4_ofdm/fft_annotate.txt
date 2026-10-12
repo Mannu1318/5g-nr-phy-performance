@@ -1,0 +1,152 @@
+ Percent |	Source code & Disassembly of profile_fft for cpu_core/cycles/Pu (1824 samples, percent: local period)
+---------------------------------------------------------------------------------------------------------------------
+         : 0    0x1540 <ofdm_fft>:
+    0.00 :   1540:        endbr64
+    0.00 :   1544:        pushq   %r15
+    0.00 :   1546:        movq    %rdx, %rcx
+    0.00 :   1549:        pushq   %r14
+    0.00 :   154b:        pushq   %r13
+    0.00 :   154d:        pushq   %r12
+    0.00 :   154f:        pushq   %rbp
+    0.00 :   1550:        pushq   %rbx
+    0.00 :   1551:        subq    $0x48, %rsp
+    0.00 :   1555:        testq   %rdi, %rdi
+    0.00 :   1558:        sete    %al
+    0.00 :   155b:        testq   %rsi, %rsi
+    0.00 :   155e:        movq    %rdx, 0x20(%rsp)
+    0.00 :   1563:        sete    %dl
+    0.00 :   1566:        movq    %rsi, 0x18(%rsp)
+    0.00 :   156b:        orb     %dl, %al
+    0.00 :   156d:        jne     0x1746 <ofdm_fft+0x206>
+    0.00 :   1573:        testq   %rcx, %rcx
+    0.00 :   1576:        je      0x1746 <ofdm_fft+0x206>
+    0.00 :   157c:        leaq    -0x1(%rcx), %rdx
+    0.00 :   1580:        movl    $0xffffffff, %eax
+    0.00 :   1585:        testq   %rdx, %rcx
+    0.00 :   1588:        jne     0x174b <ofdm_fft+0x20b>
+    0.00 :   158e:        movq    %rdi, %r9
+    0.00 :   1591:        movq    %rcx, %rax
+    0.00 :   1594:        xorl    %edi, %edi
+    0.00 :   1596:        cmpq    $0x1, %rcx
+    0.00 :   159a:        je      0x15ac <ofdm_fft+0x6c>
+    0.00 :   159c:        nopl    (%rax)
+    0.00 :   15a0:        shrq    %rax
+    0.00 :   15a3:        addl    $0x1, %edi
+    0.00 :   15a6:        cmpq    $0x1, %rax
+    0.00 :   15aa:        jne     0x15a0 <ofdm_fft+0x60>
+    0.00 :   15ac:        xorl    %r8d, %r8d
+    0.00 :   15af:        nop
+    0.00 :   15b0:        movq    %r8, %rcx
+    0.00 :   15b3:        xorl    %eax, %eax
+    0.00 :   15b5:        xorl    %edx, %edx
+    0.00 :   15b7:        testl   %edi, %edi
+    0.00 :   15b9:        je      0x175a <ofdm_fft+0x21a>
+    0.00 :   15bf:        nop
+    0.00 :   15c0:        movq    %rcx, %rsi
+    0.00 :   15c3:        addq    %rax, %rax
+    2.05 :   15c6:        addl    $0x1, %edx
+   14.43 :   15c9:        shrq    %rcx
+    0.00 :   15cc:        andl    $0x1, %esi
+    0.00 :   15cf:        orq     %rsi, %rax
+    0.00 :   15d2:        cmpl    %edi, %edx
+   13.67 :   15d4:        jne     0x15c0 <ofdm_fft+0x80>
+    2.10 :   15d6:        movq    0x18(%rsp), %rdx
+    0.00 :   15db:        shlq    $0x4, %rax
+    0.00 :   15df:        addq    %rdx, %rax
+    0.00 :   15e2:        movq    %r8, %rdx
+    0.00 :   15e5:        addq    $0x1, %r8
+    0.00 :   15e9:        shlq    $0x4, %rdx
+    0.00 :   15ed:        movdqu  (%r9,%rdx), %xmm6
+    0.00 :   15f3:        movups  %xmm6, (%rax)
+    0.57 :   15f6:        movq    0x20(%rsp), %rax
+    0.00 :   15fb:        cmpq    %rax, %r8
+    1.22 :   15fe:        jb      0x15b0 <ofdm_fft+0x70>
+    0.00 :   1600:        cmpq    $0x1, 0x20(%rsp)
+    0.00 :   1606:        je      0x1735 <ofdm_fft+0x1f5>
+    0.00 :   160c:        movq    $0x2, 0x10(%rsp)
+    0.00 :   1615:        leaq    0x38(%rsp), %r12
+    0.00 :   161a:        leaq    0x30(%rsp), %rbp
+    0.00 :   161f:        nop
+    0.00 :   1620:        movq    0x10(%rsp), %rax
+    0.00 :   1625:        pxor    %xmm0, %xmm0
+    0.00 :   1629:        movq    0x18(%rsp), %rcx
+    0.00 :   162e:        movq    $0x0, 0x8(%rsp)
+    0.00 :   1637:        movsd   0xac9(%rip), %xmm5  # 0x2108
+    0.00 :   163f:        cvtsi2sd        %rax, %xmm0
+    0.00 :   1644:        movq    %rax, %rbx
+    0.00 :   1647:        leaq    (%rcx,%rax,8), %rax
+    0.00 :   164b:        movq    %rax, 0x28(%rsp)
+    0.00 :   1650:        shrq    %rbx
+    0.00 :   1653:        divsd   %xmm0, %xmm5
+    0.00 :   1657:        movsd   %xmm5, (%rsp)
+    0.00 :   165c:        nopl    (%rax)
+    0.00 :   1660:        movq    0x8(%rsp), %rax
+    0.00 :   1665:        movq    0x18(%rsp), %rcx
+    0.00 :   166a:        xorl    %r15d, %r15d
+    1.96 :   166d:        movq    0x28(%rsp), %rdx
+    0.00 :   1672:        shlq    $0x4, %rax
+    0.00 :   1676:        leaq    (%rcx,%rax), %r13
+    0.00 :   167a:        leaq    (%rdx,%rax), %r14
+    0.50 :   167e:        nop
+    0.00 :   1680:        pxor    %xmm0, %xmm0
+    0.00 :   1684:        movq    %rbp, %rsi
+    0.00 :   1687:        movq    %r12, %rdi
+    8.66 :   168a:        addq    $0x10, %r13
+    0.00 :   168e:        cvtsi2sd        %r15, %xmm0
+    0.00 :   1693:        mulsd   (%rsp), %xmm0
+    6.48 :   1698:        addq    $0x1, %r15
+    0.00 :   169c:        addq    $0x10, %r14
+    6.47 :   16a0:        callq   0x10d0 <_init+0xd0>
+    0.00 :   16a5:        movsd   0x30(%rsp), %xmm2
+    0.06 :   16ab:        movupd  -0x10(%r14), %xmm0
+    0.00 :   16b1:        movsd   0x38(%rsp), %xmm3
+    8.07 :   16b7:        movupd  -0x10(%r13), %xmm1
+    0.00 :   16bd:        unpcklpd        %xmm2, %xmm2
+    0.06 :   16c1:        mulpd   %xmm0, %xmm2
+    0.00 :   16c5:        unpcklpd        %xmm3, %xmm3
+    7.91 :   16c9:        shufpd  $0x1, %xmm0, %xmm0
+    0.00 :   16ce:        mulpd   %xmm3, %xmm0
+    0.11 :   16d2:        movapd  %xmm2, %xmm3
+    0.22 :   16d6:        subpd   %xmm0, %xmm3
+    7.07 :   16da:        addpd   %xmm2, %xmm0
+    0.39 :   16de:        movsd   %xmm3, %xmm0
+    0.00 :   16e2:        movapd  %xmm0, %xmm2
+    0.11 :   16e6:        addpd   %xmm1, %xmm2
+    8.02 :   16ea:        subpd   %xmm0, %xmm1
+    0.00 :   16ee:        movups  %xmm2, -0x10(%r13)
+    0.00 :   16f3:        movups  %xmm1, -0x10(%r14)
+    0.00 :   16f8:        cmpq    %r15, %rbx
+    6.26 :   16fb:        jne     0x1680 <ofdm_fft+0x140>
+    1.68 :   16fd:        movq    0x10(%rsp), %rcx
+    0.00 :   1702:        movq    0x20(%rsp), %rdx
+    0.00 :   1707:        addq    %rcx, 0x8(%rsp)
+    0.35 :   170c:        movq    0x8(%rsp), %rax
+    0.00 :   1711:        cmpq    %rdx, %rax
+    1.61 :   1714:        jb      0x1660 <ofdm_fft+0x120>
+    0.00 :   171a:        movq    0x10(%rsp), %rax
+    0.00 :   171f:        cmpq    %rax, %rdx
+    0.00 :   1722:        je      0x1735 <ofdm_fft+0x1f5>
+    0.00 :   1724:        addq    %rax, %rax
+    0.00 :   1727:        movq    %rax, 0x10(%rsp)
+    0.00 :   172c:        cmpq    %rax, %rdx
+    0.00 :   172f:        jae     0x1620 <ofdm_fft+0xe0>
+    0.00 :   1735:        addq    $0x48, %rsp
+    0.00 :   1739:        xorl    %eax, %eax
+    0.00 :   173b:        popq    %rbx
+    0.00 :   173c:        popq    %rbp
+    0.00 :   173d:        popq    %r12
+    0.00 :   173f:        popq    %r13
+    0.00 :   1741:        popq    %r14
+    0.00 :   1743:        popq    %r15
+    0.00 :   1745:        retq
+    0.00 :   1746:        movl    $0xffffffff, %eax
+    0.00 :   174b:        addq    $0x48, %rsp
+    0.00 :   174f:        popq    %rbx
+    0.00 :   1750:        popq    %rbp
+    0.00 :   1751:        popq    %r12
+    0.00 :   1753:        popq    %r13
+    0.00 :   1755:        popq    %r14
+    0.00 :   1757:        popq    %r15
+    0.00 :   1759:        retq
+    0.00 :   175a:        movq    0x18(%rsp), %rax
+    0.00 :   175f:        jmp     0x15e2 <ofdm_fft+0xa2>
