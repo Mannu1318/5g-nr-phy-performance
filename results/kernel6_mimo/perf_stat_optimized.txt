@@ -1,0 +1,29 @@
+Kernel 6: 2x2 MIMO Zero-Forcing C benchmark
+Compiler optimization: build with -O2
+Clock: CLOCK_MONOTONIC
+
+Batch size,Iterations,Total pairs,Elapsed (s),ns/pair,pairs/s
+1,1000000,1000000,0.072306,72.31,13830109.39
+16,62500,1000000,0.054368,54.37,18393160.61
+256,3906,999936,0.054746,54.75,18265002.99
+4096,244,999424,0.055422,55.45,18033043.81
+65536,15,983040,0.055336,56.29,17764908.37
+
+ Performance counter stats for './profiling/kernel6_mimo/benchmark_mimo_zf':
+
+            299.72 msec task-clock:u                                                          
+       318,328,486      cpu_atom/cycles/u                                                       (5.62%)
+     1,411,623,042      cpu_core/cycles/u                                                       (94.38%)
+       766,065,758      cpu_atom/instructions/u                                                 (5.62%)
+     4,769,012,699      cpu_core/instructions/u                                                 (94.38%)
+       119,659,380      cpu_atom/branches/u                                                     (5.62%)
+       736,979,415      cpu_core/branches/u                                                     (94.38%)
+            49,973      cpu_atom/branch-misses/u                                                (5.62%)
+            71,793      cpu_core/branch-misses/u                                                (94.38%)
+
+       0.301763497 seconds time elapsed
+
+       0.297694000 seconds user
+       0.003995000 seconds sys
+
+

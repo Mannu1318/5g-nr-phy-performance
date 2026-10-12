@@ -55,3 +55,8 @@ profiling/kernel5_channel_estimation/benchmark_channel_estimation
 
 # Kernel 5 raw perf recordings
 results/kernel5_channel_estimation/*.data
+
+# Kernel 6 MIMO ZF compiled test and benchmark binaries
+tests/kernel6_mimo/test_mimo_zf
+tests/kernel6_mimo/zf_cross_validation
+profiling/kernel6_mimo/benchmark_mimo_zf
