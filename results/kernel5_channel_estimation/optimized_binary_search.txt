@@ -1,0 +1,20 @@
+Kernel 5: Channel estimation — binary-search implementation
+Compiler optimization: -O2
+Warm-up calls per case: 50
+Calls per sample: 500
+Independent samples per case: 7
+Timing statistic: median and minimum across samples
+Checksum: all output estimates consumed outside the timed region
+Note: One benchmark run; timing variation should be considered.
+
+Subcarriers    Pilots          Median (ns)     Minimum (ns)
+------------------------------------------------------------
+64             4                   2686.94          2682.97
+256            4                   7428.92          7325.57
+256            16                  7386.04          7325.24
+1024           16                 29934.92         29379.72
+1024           64                 29218.49         29105.12
+2048           64                 59183.44         59130.00
+
+Result sink: 1.747460750000e+04
+Benchmark completed successfully.

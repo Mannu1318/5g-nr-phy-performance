@@ -1,0 +1,306 @@
+# To display the perf.data header info, please use --header/--header-only options.
+#
+#
+# Total Lost Samples: 0
+#
+# Samples: 12  of event 'cpu_atom/cycles/Pu'
+# Event count (approx.): 3215250
+#
+# Children      Self  Symbol                             IPC   [IPC Coverage]
+# ........  ........  .................................  ....................
+#
+    73.77%    73.77%  [.] complex_divide                 -      -
+    18.45%    18.45%  [.] estimate_channel               -      -
+     3.89%     3.89%  [.] _int_malloc                    -      -
+            |
+            ---___printf_chk (inlined)
+               __vfprintf_internal
+               __printf_buffer_to_file_done
+               __printf_buffer_flush_to_file (inlined)
+               _IO_new_file_xsputn (inlined)
+               _IO_new_file_xsputn (inlined)
+               _IO_new_file_overflow (inlined)
+               _IO_doallocbuf
+               _IO_file_doallocate
+               __libc_malloc (inlined)
+               tcache_init (inlined)
+               _int_malloc
+               sysmalloc (inlined)
+               __glibc_morecore (inlined)
+               __brk
+               0xffffffffa0800b90
+
+     3.89%     0.00%  [.] main                           -      -
+            |
+            ---___printf_chk (inlined)
+               __vfprintf_internal
+               __printf_buffer_to_file_done
+               __printf_buffer_flush_to_file (inlined)
+               _IO_new_file_xsputn (inlined)
+               _IO_new_file_xsputn (inlined)
+               _IO_new_file_overflow (inlined)
+               _IO_doallocbuf
+               _IO_file_doallocate
+               __libc_malloc (inlined)
+               tcache_init (inlined)
+               _int_malloc
+               sysmalloc (inlined)
+               __glibc_morecore (inlined)
+               __brk
+               0xffffffffa0800b90
+
+     3.89%     0.00%  [.] ___printf_chk (inlined)        -      -
+            |
+            ---__vfprintf_internal
+               __printf_buffer_to_file_done
+               __printf_buffer_flush_to_file (inlined)
+               _IO_new_file_xsputn (inlined)
+               _IO_new_file_xsputn (inlined)
+               _IO_new_file_overflow (inlined)
+               _IO_doallocbuf
+               _IO_file_doallocate
+               __libc_malloc (inlined)
+               tcache_init (inlined)
+               _int_malloc
+               sysmalloc (inlined)
+               __glibc_morecore (inlined)
+               __brk
+               0xffffffffa0800b90
+
+     3.89%     0.00%  [.] __vfprintf_internal            -      -
+            |
+            ---__printf_buffer_to_file_done
+               __printf_buffer_flush_to_file (inlined)
+               _IO_new_file_xsputn (inlined)
+               _IO_new_file_xsputn (inlined)
+               _IO_new_file_overflow (inlined)
+               _IO_doallocbuf
+               _IO_file_doallocate
+               __libc_malloc (inlined)
+               tcache_init (inlined)
+               _int_malloc
+               sysmalloc (inlined)
+               __glibc_morecore (inlined)
+               __brk
+               0xffffffffa0800b90
+
+     3.89%     0.00%  [.] __printf_buffer_to_file_done   -      -
+            |
+            ---__printf_buffer_flush_to_file (inlined)
+               _IO_new_file_xsputn (inlined)
+               _IO_new_file_xsputn (inlined)
+               _IO_new_file_overflow (inlined)
+               _IO_doallocbuf
+               _IO_file_doallocate
+               __libc_malloc (inlined)
+               tcache_init (inlined)
+               _int_malloc
+               sysmalloc (inlined)
+               __glibc_morecore (inlined)
+               __brk
+               0xffffffffa0800b90
+
+     3.89%     0.00%  [.] __printf_buffer_flush_to_file (inlined)  -      -
+            |
+            ---_IO_new_file_xsputn (inlined)
+               _IO_new_file_xsputn (inlined)
+               _IO_new_file_overflow (inlined)
+               _IO_doallocbuf
+               _IO_file_doallocate
+               __libc_malloc (inlined)
+               tcache_init (inlined)
+               _int_malloc
+               sysmalloc (inlined)
+               __glibc_morecore (inlined)
+               __brk
+               0xffffffffa0800b90
+
+     3.89%     0.00%  [.] _IO_new_file_xsputn (inlined)  -      -
+            |
+            ---_IO_new_file_xsputn (inlined)
+               _IO_new_file_overflow (inlined)
+               _IO_doallocbuf
+               _IO_file_doallocate
+               __libc_malloc (inlined)
+               tcache_init (inlined)
+               _int_malloc
+               sysmalloc (inlined)
+               __glibc_morecore (inlined)
+               __brk
+               0xffffffffa0800b90
+
+     3.89%     3.89%  [.] _dl_check_map_versions         -      -
+            |
+            ---_dl_start
+               _dl_start_final (inlined)
+               _dl_sysdep_start
+               dl_main
+               _dl_receive_error
+               set_catch (inlined)
+               version_check_doit
+               _dl_check_all_versions
+               _dl_check_map_versions
+
+     3.89%     0.00%  [.] _IO_new_file_overflow (inlined)  -      -
+            |
+            ---_IO_doallocbuf
+               _IO_file_doallocate
+               __libc_malloc (inlined)
+               tcache_init (inlined)
+               _int_malloc
+               sysmalloc (inlined)
+               __glibc_morecore (inlined)
+               __brk
+               0xffffffffa0800b90
+
+     3.89%     0.00%  [.] _dl_start_user                 -      -
+            |
+            ---_dl_start
+               _dl_start_final (inlined)
+               _dl_sysdep_start
+               dl_main
+               _dl_receive_error
+               set_catch (inlined)
+               version_check_doit
+               _dl_check_all_versions
+               _dl_check_map_versions
+
+     3.89%     0.00%  [.] _IO_doallocbuf                 -      -
+            |
+            ---_IO_file_doallocate
+               __libc_malloc (inlined)
+               tcache_init (inlined)
+               _int_malloc
+               sysmalloc (inlined)
+               __glibc_morecore (inlined)
+               __brk
+               0xffffffffa0800b90
+
+     3.89%     0.00%  [.] _dl_start                      -      -
+            |
+            ---_dl_start_final (inlined)
+               _dl_sysdep_start
+               dl_main
+               _dl_receive_error
+               set_catch (inlined)
+               version_check_doit
+               _dl_check_all_versions
+               _dl_check_map_versions
+
+     3.89%     0.00%  [.] _IO_file_doallocate            -      -
+            |
+            ---__libc_malloc (inlined)
+               tcache_init (inlined)
+               _int_malloc
+               sysmalloc (inlined)
+               __glibc_morecore (inlined)
+               __brk
+               0xffffffffa0800b90
+
+     3.89%     0.00%  [.] _dl_start_final (inlined)      -      -
+            |
+            ---_dl_sysdep_start
+               dl_main
+               _dl_receive_error
+               set_catch (inlined)
+               version_check_doit
+               _dl_check_all_versions
+               _dl_check_map_versions
+
+     3.89%     0.00%  [.] __libc_malloc (inlined)        -      -
+            |
+            ---tcache_init (inlined)
+               _int_malloc
+               sysmalloc (inlined)
+               __glibc_morecore (inlined)
+               __brk
+               0xffffffffa0800b90
+
+     3.89%     0.00%  [.] _dl_sysdep_start               -      -
+            |
+            ---dl_main
+               _dl_receive_error
+               set_catch (inlined)
+               version_check_doit
+               _dl_check_all_versions
+               _dl_check_map_versions
+
+     3.89%     0.00%  [.] dl_main                        -      -
+            |
+            ---_dl_receive_error
+               set_catch (inlined)
+               version_check_doit
+               _dl_check_all_versions
+               _dl_check_map_versions
+
+     3.89%     0.00%  [.] tcache_init (inlined)          -      -
+            |
+            ---_int_malloc
+               sysmalloc (inlined)
+               __glibc_morecore (inlined)
+               __brk
+               0xffffffffa0800b90
+
+     3.89%     0.00%  [.] _dl_receive_error              -      -
+            |
+            ---set_catch (inlined)
+               version_check_doit
+               _dl_check_all_versions
+               _dl_check_map_versions
+
+     3.89%     0.00%  [.] set_catch (inlined)            -      -
+            |
+            ---version_check_doit
+               _dl_check_all_versions
+               _dl_check_map_versions
+
+     3.89%     0.00%  [.] sysmalloc (inlined)            -      -
+            |
+            ---__glibc_morecore (inlined)
+               __brk
+               0xffffffffa0800b90
+
+     3.89%     0.00%  [.] __glibc_morecore (inlined)     -      -
+            |
+            ---__brk
+               0xffffffffa0800b90
+
+     3.89%     0.00%  [.] version_check_doit             -      -
+            |
+            ---_dl_check_all_versions
+               _dl_check_map_versions
+
+     3.89%     0.00%  [.] __brk                          -      -
+            |
+            ---0xffffffffa0800b90
+
+     3.89%     0.00%  [.] _dl_check_all_versions         -      -
+            |
+            ---_dl_check_map_versions
+
+     3.89%     0.00%  [.] 0xffffffffa0800b90             -      -
+
+
+# Samples: 2K of event 'cpu_core/cycles/Pu'
+# Event count (approx.): 2455319776
+#
+# Children      Self  Symbol                IPC   [IPC Coverage]
+# ........  ........  ....................  ....................
+#
+    62.24%    60.93%  [.] complex_divide    -      -
+            |
+            |--61.14%--complex_divide
+            |
+             --1.10%--estimate_channel
+
+    40.17%    39.07%  [.] estimate_channel  -      -
+            |
+            |--38.86%--estimate_channel
+            |
+             --1.30%--complex_divide
+
+
+
+#
+# (Cannot load tips.txt file, please install perf!)
+#

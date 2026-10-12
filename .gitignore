@@ -43,3 +43,15 @@ profiling/kernel4_ofdm/profile_fft
 
 # Kernel 4 raw perf recordings
 results/kernel4_ofdm/*.data
+
+# Kernel 5 channel-estimation generated binaries
+kernels/kernel5_channel_estimation/channel_estimation.o
+kernels/kernel5_channel_estimation/__pycache__/
+tests/kernel5_channel_estimation/__pycache__/
+tests/kernel5_channel_estimation/test_channel_estimation
+tests/kernel5_channel_estimation/test_channel_estimation_edge_cases
+tests/kernel5_channel_estimation/test_channel_estimation_binary_search
+profiling/kernel5_channel_estimation/benchmark_channel_estimation
+
+# Kernel 5 raw perf recordings
+results/kernel5_channel_estimation/*.data

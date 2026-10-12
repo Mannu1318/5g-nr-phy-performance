@@ -1,0 +1,17 @@
+Kernel 5: Channel estimation baseline benchmark
+Compiler optimization: -O2
+Warm-up calls per case: 50
+Calls per sample: 500
+Independent samples per case: 7
+
+Subcarriers    Pilots          Median (ns)     Minimum (ns)
+------------------------------------------------------------
+64             4                   2882.43          2223.66
+256            4                   7336.91          7311.57
+256            16                  7383.21          7330.98
+1024           16                 29353.54         29256.05
+1024           64                 32091.16         32053.52
+2048           64                 64171.38         64069.21
+
+Result sink: 2.100713988971e+01
+Benchmark completed successfully.

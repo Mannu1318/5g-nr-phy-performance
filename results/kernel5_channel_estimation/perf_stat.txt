@@ -1,0 +1,102 @@
+Kernel 5: Historical perf stat measurements (binary-search implementation)
+Compiler optimization: -O2
+Warm-up calls per case: 50
+Calls per sample: 500
+Independent samples per case: 7
+
+Subcarriers    Pilots          Median (ns)     Minimum (ns)
+------------------------------------------------------------
+64             4                   5115.97          2467.17
+256            4                   7184.07          7142.70
+256            16                  7353.34          7327.57
+1024           16                 29361.04         29304.07
+1024           64                 32837.40         32055.58
+2048           64                 66132.88         65437.25
+
+Result sink: 2.100713988971e+01
+Benchmark completed successfully.
+Kernel 5: Channel estimation baseline benchmark
+Compiler optimization: -O2
+Warm-up calls per case: 50
+Calls per sample: 500
+Independent samples per case: 7
+
+Subcarriers    Pilots          Median (ns)     Minimum (ns)
+------------------------------------------------------------
+64             4                   2711.99          1879.31
+256            4                   7582.74          7478.62
+256            16                  7818.95          7797.05
+1024           16                 29663.93         29472.08
+1024           64                 32349.82         32131.95
+2048           64                 65146.01         64112.50
+
+Result sink: 2.100713988971e+01
+Benchmark completed successfully.
+Kernel 5: Channel estimation baseline benchmark
+Compiler optimization: -O2
+Warm-up calls per case: 50
+Calls per sample: 500
+Independent samples per case: 7
+
+Subcarriers    Pilots          Median (ns)     Minimum (ns)
+------------------------------------------------------------
+64             4                   2715.89          2290.10
+256            4                   7327.96          7165.73
+256            16                  7333.97          7328.53
+1024           16                 29395.01         29261.74
+1024           64                 33470.55         32066.41
+2048           64                 66502.33         64594.60
+
+Result sink: 2.100713988971e+01
+Benchmark completed successfully.
+Kernel 5: Channel estimation baseline benchmark
+Compiler optimization: -O2
+Warm-up calls per case: 50
+Calls per sample: 500
+Independent samples per case: 7
+
+Subcarriers    Pilots          Median (ns)     Minimum (ns)
+------------------------------------------------------------
+64             4                   1834.70          1804.04
+256            4                   7344.43          7200.92
+256            16                  7439.51          7335.23
+1024           16                 29343.78         29308.40
+1024           64                 32163.35         32088.16
+2048           64                 64180.62         64099.56
+
+Result sink: 2.100713988971e+01
+Benchmark completed successfully.
+Kernel 5: Channel estimation baseline benchmark
+Compiler optimization: -O2
+Warm-up calls per case: 50
+Calls per sample: 500
+Independent samples per case: 7
+
+Subcarriers    Pilots          Median (ns)     Minimum (ns)
+------------------------------------------------------------
+64             4                   1810.43          1782.40
+256            4                   7459.78          7395.22
+256            16                  7644.44          7480.93
+1024           16                 29718.28         29562.73
+1024           64                 32876.12         32498.88
+2048           64                 66926.00         65725.85
+
+Result sink: 2.100713988971e+01
+Benchmark completed successfully.
+
+ Performance counter stats for 'profiling/kernel5_channel_estimation/benchmark_channel_estimation' (5 runs):
+
+     1,264,095,974      cpu_atom/cycles/u                                                       ( +- 24.95% )  (0.06%)
+     2,465,083,481      cpu_core/cycles/u                                                       ( +-  0.13% )  (99.94%)
+     1,014,446,802      cpu_atom/instructions/u                                                 ( +- 28.70% )  (0.06%)
+     4,270,460,037      cpu_core/instructions/u                                                 ( +-  0.19% )  (99.94%)
+       166,138,628      cpu_atom/branches/u                                                     ( +- 27.32% )  (0.06%)
+     1,054,795,841      cpu_core/branches/u                                                     ( +-  0.23% )  (99.94%)
+         1,272,554      cpu_atom/branch-misses/u                                                ( +- 49.49% )  (0.06%)
+         2,131,777      cpu_core/branch-misses/u                                                ( +-  0.42% )  (99.94%)
+         2,034,610      cpu_atom/cache-references/u                                             ( +- 76.32% )  (0.06%)
+             4,124      cpu_core/cache-references/u                                             ( +- 15.40% )  (99.94%)
+         1,233,121      cpu_atom/cache-misses/u                                                 ( +- 79.46% )  (0.06%)
+             1,278      cpu_core/cache-misses/u                                                 ( +- 14.73% )  (99.94%)
+
+       0.521136841 +- 0.003532206 seconds time elapsed  ( +-  0.68% )
