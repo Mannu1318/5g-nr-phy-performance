@@ -3,7 +3,10 @@
 
 import numpy as np
 
-from integration.channel import apply_mimo_channel
+from integration.channel import (
+    apply_mimo_channel,
+    apply_mimo_multipath_channel,
+)
 from integration.rx_chain.bit_processing import receive_bits
 from integration.rx_chain.channel_estimator import estimate_mimo_channel
 from integration.rx_chain.mimo_detector import detect_mimo_symbols
@@ -15,7 +18,7 @@ from integration.tx_chain.resource_grid import build_mimo_resource_grid
 
 def simulate_mimo_link(
     payloads: list[list[int]],
-    channel_matrix: np.ndarray,
+    channel_matrix: np.ndarray | None = None,
     n_rnti: int = 0x1234,
     n_id: int = 0x155,
     modulation: str = "QPSK",
@@ -25,12 +28,18 @@ def simulate_mimo_link(
     num_ofdm_symbols: int = 3,
     noise_variance: float = 0.0,
     rng: np.random.Generator | None = None,
+    channel_taps: np.ndarray | None = None,
 ) -> dict[str, object]:
-    """Transmit two payloads through a flat-fading 2x2 MIMO link.
+    """Transmit two payloads through a flat-fading or multipath 2x2 MIMO link.
 
     This is a simplified educational link simulation, not a complete
     standards-compliant 5G NR physical-layer implementation.
     """
+    if (channel_matrix is None) == (channel_taps is None):
+        raise ValueError(
+            "Supply either channel_matrix or channel_taps, but not both"
+        )
+
     if len(payloads) != 2:
         raise ValueError("payloads must contain exactly two payload bit lists")
 
@@ -84,13 +93,21 @@ def simulate_mimo_link(
         cp_length=cp_length,
     )
 
-    # Channel: static 2x2 flat fading with optional complex AWGN.
-    rx_waveforms = apply_mimo_channel(
-        tx_waveforms=tx_waveforms,
-        channel_matrix=channel_matrix,
-        noise_variance=noise_variance,
-        rng=rng,
-    )
+        # Channel: static flat fading or static multipath, with optional AWGN.
+    if channel_taps is not None:
+        rx_waveforms = apply_mimo_multipath_channel(
+            tx_waveforms=tx_waveforms,
+            channel_taps=channel_taps,
+            noise_variance=noise_variance,
+            rng=rng,
+        )
+    else:
+        rx_waveforms = apply_mimo_channel(
+            tx_waveforms=tx_waveforms,
+            channel_matrix=channel_matrix,
+            noise_variance=noise_variance,
+            rng=rng,
+        )
 
     # Receiver: CP removal -> FFT -> pilot channel estimation -> ZF.
     received_grid = demodulate_waveforms(
