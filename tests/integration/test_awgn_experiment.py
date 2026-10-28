@@ -33,6 +33,9 @@ def test_awgn_recovery_rates_are_valid_and_zero_noise_is_exact():
         "stream0_exact_rate",
         "stream1_exact_rate",
         "full_link_exact_rate",
+        "stream0_codeword_exact_rate",
+        "stream1_codeword_exact_rate",
+        "full_link_codeword_exact_rate",
     )
 
     for row in rows:
@@ -43,6 +46,9 @@ def test_awgn_recovery_rates_are_valid_and_zero_noise_is_exact():
     assert zero_noise["noise_variance"] == 0.0
     assert zero_noise["joint_crc_rate"] == 1.0
     assert zero_noise["full_link_exact_rate"] == 1.0
+    assert zero_noise["stream0_codeword_exact_rate"] == 1.0
+    assert zero_noise["stream1_codeword_exact_rate"] == 1.0
+    assert zero_noise["full_link_codeword_exact_rate"] == 1.0
     assert zero_noise["measured_noise_power"] == 0.0
     assert np.isinf(zero_noise["nominal_snr_db"])
 
@@ -63,9 +69,15 @@ def test_awgn_outputs_write_csv_and_markdown_report(tmp_path):
     assert len(csv_rows) == len(NOISE_VARIANCES)
     assert float(csv_rows[0]["noise_variance"]) == 0.0
     assert float(csv_rows[0]["full_link_exact_rate"]) == 1.0
+    assert float(csv_rows[0]["full_link_codeword_exact_rate"]) == 1.0
+    assert "stream0_codeword_exact_rate" in csv_rows[0]
+    assert "stream1_codeword_exact_rate" in csv_rows[0]
 
     report = report_path.read_text(encoding="utf-8")
     assert "# End-to-End 2x2 MIMO AWGN Sweep" in report
     assert "## Results" in report
     assert "## Interpretation notes" in report
+    assert "Codeword exact stream 0" in report
+    assert "Codeword exact stream 1" in report
+    assert "payload plus all 24 CRC bits" in report
     assert "Trials per noise variance: `2`" in report

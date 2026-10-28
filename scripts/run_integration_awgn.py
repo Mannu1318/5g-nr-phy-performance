@@ -56,8 +56,10 @@ def run_experiment(trials: int) -> list[dict[str, object]]:
     for variance_index, variance in enumerate(NOISE_VARIANCES):
         stream_crc = np.zeros(2, dtype=np.int64)
         stream_exact = np.zeros(2, dtype=np.int64)
+        stream_codeword_exact = np.zeros(2, dtype=np.int64)
         joint_crc = 0
         joint_exact = 0
+        joint_codeword_exact = 0
         signal_power_sum = 0.0
         measured_noise_power_sum = 0.0
         measured_noise_samples = 0
@@ -88,11 +90,20 @@ def run_experiment(trials: int) -> list[dict[str, object]]:
                 stream_exact[stream] += (
                     result["recovered_payloads"][stream] == payloads[stream]
                 )
+                stream_codeword_exact[stream] += (
+                    result["receiver_results"][stream]["codeword_bits"]
+                    == result["transmitted_codewords"][stream]
+                )
 
             both_crc = all(result["crc_valid"])
             both_exact = result["recovered_payloads"] == payloads
+            both_codeword_exact = [
+                receiver_result["codeword_bits"]
+                for receiver_result in result["receiver_results"]
+            ] == result["transmitted_codewords"]
             joint_crc += both_crc
             joint_exact += both_exact
+            joint_codeword_exact += both_codeword_exact
 
             # Reconstruct transmitted waveforms from the noiseless received
             # waveform relation. The same channel and transmitted waveforms
@@ -159,6 +170,9 @@ def run_experiment(trials: int) -> list[dict[str, object]]:
                 "stream0_exact_rate": stream_exact[0] / trials,
                 "stream1_exact_rate": stream_exact[1] / trials,
                 "full_link_exact_rate": joint_exact / trials,
+                "stream0_codeword_exact_rate": stream_codeword_exact[0] / trials,
+                "stream1_codeword_exact_rate": stream_codeword_exact[1] / trials,
+                "full_link_codeword_exact_rate": joint_codeword_exact / trials,
                 "mean_received_signal_power": mean_signal_power,
                 "measured_noise_power": measured_noise_power,
                 "nominal_snr_db": snr_db,
@@ -197,8 +211,11 @@ def write_outputs(rows: list[dict[str, object]], output_dir: Path) -> None:
         "## Results",
         "",
         "| Noise variance | Nominal SNR (dB) | CRC stream 0 | CRC stream 1 "
-        "| Joint CRC | Full-link exact recovery | Measured noise power |",
-        "|---:|---:|---:|---:|---:|---:|---:|",
+        "| Joint CRC | Payload exact stream 0 | Payload exact stream 1 "
+        "| Full-link payload exact | Codeword exact stream 0 "
+        "| Codeword exact stream 1 | Full-link codeword exact "
+        "| Measured noise power |",
+        "|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|",
     ]
 
     for row in rows:
@@ -212,7 +229,12 @@ def write_outputs(rows: list[dict[str, object]], output_dir: Path) -> None:
             f"| {row['stream0_crc_rate']:.3f} "
             f"| {row['stream1_crc_rate']:.3f} "
             f"| {row['joint_crc_rate']:.3f} "
+            f"| {row['stream0_exact_rate']:.3f} "
+            f"| {row['stream1_exact_rate']:.3f} "
             f"| {row['full_link_exact_rate']:.3f} "
+            f"| {row['stream0_codeword_exact_rate']:.3f} "
+            f"| {row['stream1_codeword_exact_rate']:.3f} "
+            f"| {row['full_link_codeword_exact_rate']:.3f} "
             f"| {row['measured_noise_power']:.6f} |"
         )
 
@@ -222,7 +244,10 @@ def write_outputs(rows: list[dict[str, object]], output_dir: Path) -> None:
             "## Interpretation notes",
             "",
             "- Rates are empirical results from the specified number of trials.",
-            "- CRC success is not assumed to guarantee exact payload recovery.",
+            "- Payload exact recovery compares payload bits only; codeword "
+            "exact recovery compares payload plus all 24 CRC bits.",
+            "- CRC success is a separate check over the recovered complete "
+            "codeword; a valid CRC does not prove that every bit is correct.",
             "- At zero noise, measured noise power is reported as zero and SNR "
             "as infinite.",
             "- For nonzero variance, finite-sample measured noise power may "
