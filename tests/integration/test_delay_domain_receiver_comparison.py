@@ -42,6 +42,15 @@ def test_noise_free_delay_domain_receiver_recovers_codewords():
     assert row["delay_domain_joint_payload_exact_rate"] == 1.0
     assert row["delay_domain_joint_codeword_exact_rate"] == 1.0
 
+    # Rates use all transmitted trials, not only successful receiver trials.
+    for estimator in ("kernel5", "delay_domain"):
+        assert row[f"{estimator}_rate_denominator"] == row["trials"]
+        assert row[f"{estimator}_joint_packet_error_rate"] == 0.0
+        assert row[f"{estimator}_joint_ber_conditional"] == 0.0
+        assert row[f"{estimator}_joint_compared_bits"] == 2 * 38 * 2
+
+    assert row["delay_domain_joint_crc_packet_error_rate"] == 0.0
+
     assert (
         row["delay_domain_mean_nmse"]
         < row["kernel5_mean_nmse"]
@@ -74,5 +83,15 @@ def test_experiment_writes_isolated_outputs(tmp_path):
         saved_profile = json.load(handle)
 
     assert saved_profile
-    assert "delay_domain" in report_path.read_text(encoding="utf-8")
-    assert "kernel5" in report_path.read_text(encoding="utf-8")
+    report = report_path.read_text(encoding="utf-8")
+    assert "delay_domain" in report
+    assert "kernel5" in report
+    assert "BER and Packet Error Rates" in report
+    assert "Joint PER" in report
+    assert "all transmitted trials" in report
+
+    for estimator in ("kernel5", "delay_domain"):
+        assert int(saved_rows[0][f"{estimator}_rate_denominator"]) == 2
+        assert f"{estimator}_joint_ber_conditional" in saved_rows[0]
+        assert f"{estimator}_joint_packet_error_rate" in saved_rows[0]
+        assert f"{estimator}_joint_crc_packet_error_rate" in saved_rows[0]

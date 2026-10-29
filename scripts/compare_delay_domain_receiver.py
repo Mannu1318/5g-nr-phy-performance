@@ -20,6 +20,7 @@ from integration.experimental.delay_domain_channel_estimator import (
     estimate_channel_delay_domain_diagnostics,
 )
 from integration.rx_chain.bit_processing import receive_bits
+from integration.multipath_metrics import summarize_outcomes
 from integration.rx_chain.channel_estimator import estimate_mimo_channel
 from integration.rx_chain.mimo_detector import detect_mimo_symbols
 from integration.rx_chain.ofdm_receiver import demodulate_waveforms
@@ -152,19 +153,13 @@ def evaluate_estimator(received_grid, channel_estimates, data_bins, payloads, co
         bool(receiver_results[s]["crc_valid"])
         for s in range(2)
     ]
-    payload_exact = [
-        receiver_results[s]["payload_bits"] == payloads[s]
-        for s in range(2)
-    ]
-    codeword_exact = [
-        receiver_results[s]["codeword_bits"] == codewords[s]
-        for s in range(2)
-    ]
-
     return {
-        "crc": crc,
-        "payload_exact": payload_exact,
-        "codeword_exact": codeword_exact,
+        "recovered_payloads": [
+            receiver_results[s]["payload_bits"] for s in range(2)
+        ],
+        "crc_valid": crc,
+        "receiver_results": receiver_results,
+        "transmitted_codewords": codewords,
     }
 
 
@@ -183,21 +178,7 @@ def run_experiment(trials, noise_variances):
     rows = []
 
     for variance_index, variance in enumerate(noise_variances):
-        stats = {
-            estimator: {
-                metric: np.zeros(2, dtype=np.int64)
-                for metric in ("crc", "payload_exact", "codeword_exact")
-            }
-            for estimator in ("kernel5", "delay_domain")
-        }
-        joint = {
-            estimator: {
-                metric: 0
-                for metric in ("crc", "payload_exact", "codeword_exact")
-            }
-            for estimator in ("kernel5", "delay_domain")
-        }
-        failures = {"kernel5": 0, "delay_domain": 0}
+        outcomes = {"kernel5": [], "delay_domain": []}
         nmse = {"kernel5": [], "delay_domain": []}
         residuals = []
         conditions = []
@@ -241,20 +222,21 @@ def run_experiment(trials, noise_variances):
                         received_grid, estimates, data_bins, payloads, codewords
                     )
                 except (ValueError, np.linalg.LinAlgError, FloatingPointError):
-                    failures[name] += 1
+                    outcomes[name].append(None)
                     continue
 
-                for metric in ("crc", "payload_exact", "codeword_exact"):
-                    stats[name][metric] += np.asarray(
-                        outcome[metric], dtype=np.int64
-                    )
-                    joint[name][metric] += int(all(outcome[metric]))
+                outcomes[name].append(outcome)
+
+        summaries = {
+            name: summarize_outcomes(payloads_by_trial, outcomes[name])
+            for name in ("kernel5", "delay_domain")
+        }
 
         row = {
             "noise_variance": float(variance),
             "trials": trials,
-            "kernel5_receiver_failures": failures["kernel5"],
-            "delay_domain_receiver_failures": failures["delay_domain"],
+            "kernel5_receiver_failures": summaries["kernel5"]["failed_trials"],
+            "delay_domain_receiver_failures": summaries["delay_domain"]["failed_trials"],
             "kernel5_mean_nmse": float(np.mean(nmse["kernel5"])),
             "delay_domain_mean_nmse": float(np.mean(nmse["delay_domain"])),
             "mean_delay_domain_residual_norm": float(np.mean(residuals)),
@@ -262,22 +244,42 @@ def run_experiment(trials, noise_variances):
         }
 
         for name in ("kernel5", "delay_domain"):
-            successful_trials = trials - failures[name]
-            row[f"{name}_rate_denominator"] = successful_trials
-            for metric in ("crc", "payload_exact", "codeword_exact"):
-                denominator = max(successful_trials, 1)
-                row[f"{name}_stream0_{metric}_rate"] = (
-                    float(stats[name][metric][0] / denominator)
-                    if successful_trials else float("nan")
-                )
-                row[f"{name}_stream1_{metric}_rate"] = (
-                    float(stats[name][metric][1] / denominator)
-                    if successful_trials else float("nan")
-                )
-                row[f"{name}_joint_{metric}_rate"] = (
-                    float(joint[name][metric] / denominator)
-                    if successful_trials else float("nan")
-                )
+            summary = summaries[name]
+            # Packet, CRC, and exact-recovery rates use every transmitted trial.
+            row[f"{name}_rate_denominator"] = trials
+
+            rate_suffixes = {
+                "crc": "crc_success_rate",
+                "payload_exact": "payload_exact_rate",
+                "codeword_exact": "codeword_exact_rate",
+            }
+            for metric, suffix in rate_suffixes.items():
+                row[f"{name}_stream0_{metric}_rate"] = summary[
+                    f"stream0_{suffix}"
+                ]
+                row[f"{name}_stream1_{metric}_rate"] = summary[
+                    f"stream1_{suffix}"
+                ]
+                row[f"{name}_joint_{metric}_rate"] = summary[f"joint_{suffix}"]
+
+            for metric in (
+                "stream0_bit_errors",
+                "stream1_bit_errors",
+                "stream0_compared_bits",
+                "stream1_compared_bits",
+                "stream0_ber_conditional",
+                "stream1_ber_conditional",
+                "joint_bit_errors",
+                "joint_compared_bits",
+                "joint_ber_conditional",
+                "stream0_packet_error_rate",
+                "stream1_packet_error_rate",
+                "joint_packet_error_rate",
+                "stream0_crc_packet_error_rate",
+                "stream1_crc_packet_error_rate",
+                "joint_crc_packet_error_rate",
+            ):
+                row[f"{name}_{metric}"] = summary[metric]
 
         rows.append(row)
 
@@ -363,9 +365,32 @@ def write_outputs(rows, profile_metadata, channel_taps, output_dir):
 
     lines.extend([
         "",
+        "## BER and Packet Error Rates",
+        "",
+        "| Noise variance | Estimator | BER stream 0 | BER stream 1 | Joint BER | Joint PER | Joint CRC packet error rate |",
+        "|---:|---|---:|---:|---:|---:|---:|",
+    ])
+
+    for row in rows:
+        for name in ("kernel5", "delay_domain"):
+            def format_optional_rate(value):
+                return "N/A" if value is None else f"{value:.6f}"
+
+            lines.append(
+                f"| {row['noise_variance']:g} | {name} "
+                f"| {format_optional_rate(row[f'{name}_stream0_ber_conditional'])} "
+                f"| {format_optional_rate(row[f'{name}_stream1_ber_conditional'])} "
+                f"| {format_optional_rate(row[f'{name}_joint_ber_conditional'])} "
+                f"| {row[f'{name}_joint_packet_error_rate']:.3f} "
+                f"| {row[f'{name}_joint_crc_packet_error_rate']:.3f} |"
+            )
+
+    lines.extend([
+        "",
         "## Interpretation and limitations",
         "",
-        "- Rates use successful receiver trials as the denominator; receiver failures are reported separately.",
+        "- Packet error, CRC success/error, and exact-recovery rates use all transmitted trials as the denominator; receiver failures count as errors.",
+        "- BER is conditional on receiver trials that returned payload bits; failed trials contribute no fabricated bits.",
         "- Payload exact recovery compares the original 38 payload bits per stream.",
         "- Codeword exact recovery includes payload and all 24 CRC bits.",
         "- CRC success is not proof of exact payload or codeword recovery.",
