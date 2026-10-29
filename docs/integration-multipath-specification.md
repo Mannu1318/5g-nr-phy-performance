@@ -205,6 +205,59 @@ the channel response is sufficiently sampled by the existing pilots and the
 effective per-subcarrier matrices are well-conditioned. Not every multipath
 profile is expected to produce exact recovery with the current receiver.
 
+### 9.1 Reproduced Noise-Free Multipath Limitation
+
+A deterministic 100-trial experiment was run with the configured multipath
+profile, zero AWGN, and the existing channel estimator and ZF detector.
+
+The results were:
+
+| Metric | Flat channel | Multipath channel |
+|---|---:|---:|
+| Payload exact recovery, joint | 100% | 100% |
+| Joint CRC success | 100% | 60% |
+| Joint CRC packet error rate | 0% | 40% |
+| Joint payload bit error rate | 0% | 0% |
+
+For the multipath case, stream 0 achieved 60% CRC success, while stream 1
+achieved 100%. No detector failures or ill-conditioned subcarrier matrices
+were reported in this experiment.
+
+A deterministic investigation of trial index 1 identified one incorrect
+codeword bit at position 46, within the 24-bit CRC field. The payload was
+recovered exactly, but CRC validation correctly failed.
+
+To isolate the source of this error, the same received data was detected
+using the true frequency-domain channel instead of the linearly interpolated
+channel estimate. At FFT bin 48, the estimated-channel detection error was
+approximately 0.8173, whereas the true-channel detection error was
+approximately 4.23 × 10⁻¹⁵. This demonstrates that the channel estimate
+caused the symbol decision error in this trial; the true-channel ZF detector
+recovered the symbol to numerical precision.
+
+The simplified resource-grid mapping places the 38 payload bits before the
+24 CRC bits in the codeword. With QPSK and the current ascending data-bin
+mapping, payload symbols occupy the earlier data bins and CRC symbols occupy
+the later data bins. Frequency-selective channel-estimation errors can
+therefore affect the CRC field without affecting the payload in a particular
+trial.
+
+**Interpretation:** These results do not indicate a demonstrated defect in
+CRC generation, CRC extraction, or CRC validation. They expose a limitation
+of the current pilot layout and linear channel interpolation for this
+frequency-selective profile. The diagnostic establishes the cause for the
+examined trial; it does not independently prove the cause of every CRC failure
+in the 100-trial sweep.
+
+The true-channel comparison is a diagnostic only. It does not change the
+normal receiver path or represent a practical receiver implementation,
+because a real receiver does not know the true channel response.
+
+Any future improvement should be evaluated separately—for example, by
+improving channel estimation or evaluating alternative pilot spacing and
+resource mapping—while retaining the existing reproducible baseline.
+
+
 ## 10. Validation Requirements
 
 The channel function must validate:

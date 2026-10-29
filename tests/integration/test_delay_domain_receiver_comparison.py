@@ -1,0 +1,78 @@
+import csv
+import json
+
+import numpy as np
+
+from scripts.compare_delay_domain_receiver import (
+    run_experiment,
+    write_outputs,
+)
+
+
+def test_noise_free_receiver_comparison_is_deterministic():
+    first_rows, first_metadata, first_taps = run_experiment(
+        trials=2,
+        noise_variances=[0.0],
+    )
+    second_rows, second_metadata, second_taps = run_experiment(
+        trials=2,
+        noise_variances=[0.0],
+    )
+
+    assert first_rows == second_rows
+    assert first_metadata == second_metadata
+    np.testing.assert_array_equal(first_taps, second_taps)
+
+
+def test_noise_free_delay_domain_receiver_recovers_codewords():
+    rows, _, _ = run_experiment(
+        trials=2,
+        noise_variances=[0.0],
+    )
+
+    assert len(rows) == 1
+    row = rows[0]
+
+    assert row["noise_variance"] == 0.0
+    assert row["trials"] == 2
+    assert row["kernel5_receiver_failures"] == 0
+    assert row["delay_domain_receiver_failures"] == 0
+
+    assert row["delay_domain_joint_crc_rate"] == 1.0
+    assert row["delay_domain_joint_payload_exact_rate"] == 1.0
+    assert row["delay_domain_joint_codeword_exact_rate"] == 1.0
+
+    assert (
+        row["delay_domain_mean_nmse"]
+        < row["kernel5_mean_nmse"]
+    )
+
+
+def test_experiment_writes_isolated_outputs(tmp_path):
+    rows, profile_metadata, channel_taps = run_experiment(
+        trials=2,
+        noise_variances=[0.0],
+    )
+
+    write_outputs(rows, profile_metadata, channel_taps, tmp_path)
+
+    csv_path = tmp_path / "receiver_comparison.csv"
+    profile_path = tmp_path / "receiver_comparison_profile.json"
+    report_path = tmp_path / "receiver_comparison_report.md"
+
+    assert csv_path.is_file()
+    assert profile_path.is_file()
+    assert report_path.is_file()
+
+    with csv_path.open(newline="", encoding="utf-8") as handle:
+        saved_rows = list(csv.DictReader(handle))
+
+    assert len(saved_rows) == 1
+    assert float(saved_rows[0]["noise_variance"]) == 0.0
+
+    with profile_path.open(encoding="utf-8") as handle:
+        saved_profile = json.load(handle)
+
+    assert saved_profile
+    assert "delay_domain" in report_path.read_text(encoding="utf-8")
+    assert "kernel5" in report_path.read_text(encoding="utf-8")
