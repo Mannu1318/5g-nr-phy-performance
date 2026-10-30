@@ -1,22 +1,24 @@
-# 5G NR L1 PHY Performance Analysis
+# 5G NR PHY Performance Engineering
 ## Environment and Test Setup
 
 ### Hardware
 
-- CPU: 12th Gen Intel(R) Core(TM) i7-12700
+- CPU: 12th Gen Intel Core i7-12700
 - Architecture: x86_64
-- Physical cores: 12
-- Logical CPUs / threads: 20
+- Physical cores: 12 (8 P-cores and 4 E-cores)
+- Logical CPUs: 20
 - CPU sockets: 1
-- Maximum CPU frequency: up to 4.9 GHz
+- Maximum reported frequency: 4.9 GHz
+- L1 data cache: 512 KiB (12 instances)
+- L1 instruction cache: 512 KiB (12 instances)
+- L2 cache: 12 MiB
 - L3 cache: 25 MiB
 - NUMA nodes: 1
-- CPU vendor: GenuineIntel
 
 ### CPU Instruction Set
 
 - AVX2: Supported
-- AVX-512: Not present in the reported CPU flags
+- AVX-512: Not exposed by the current CPU configuration
 - FMA: Supported
 - SSE4.1/SSE4.2: Supported
 - AES: Supported
@@ -32,23 +34,24 @@
 - GCC: 13.3.0
 - CMake: 3.28.3
 - Git: 2.43.0
-- perf: 7.0.14
+- Linux perf: 7.0.14
 - Python: 3.12.3
+- pytest: 9.1.1
 
 ### Python Analysis Libraries
 
-- NumPy: 1.26.4
-- SciPy: 1.11.4
-- Matplotlib: 3.6.3
-- Pandas: Installed in project virtual environment
+- NumPy: 2.5.3
+- SciPy: 1.18.1
+- Matplotlib: 3.11.2
+- Pandas: 3.0.6
 
-### CPU Topology
+These versions were checked in the active project virtual environment during documentation finalization.
 
-The system contains 12 physical CPU cores and 20 logical CPUs.
+### CPU Topology Notes
 
-Logical CPUs 0–15 correspond to the higher-frequency physical cores with two logical threads per core. Logical CPUs 16–19 correspond to four additional lower-frequency cores with one logical CPU each.
+The processor exposes 12 physical cores and 20 logical CPUs. The system has a hybrid CPU architecture.
 
-Detailed CPU affinity and P-core/E-core experiments will be performed during the multithreading optimization phase.
+The aggregate topology and cache information above were obtained using `lscpu`. No fixed logical-CPU-to-core-type mapping is claimed in this document.
 
 ### Project Environment
 
@@ -58,45 +61,55 @@ The project uses a Python virtual environment:
 
 The virtual environment is excluded from Git tracking through `.gitignore`.
 
+Activate it from the repository root using:
+
+`source .venv/bin/activate`
+
 ### Performance Analysis Tools
 
-The main performance-analysis tool will be Linux `perf`.
+Linux `perf` is used for performance profiling and hardware-counter analysis where applicable.
 
-Planned measurements include:
+Measurements and analysis across the project include:
+- Execution time and throughput.
+- CPU cycles and instruction counts.
+- Instructions per cycle (IPC).
+- Cache references and cache misses where measured.
+- Kernel-specific performance metrics such as cycles per bit or cycles per symbol where applicable.
 
-- CPU cycles
-- Instructions
-- Instructions per cycle (IPC)
-- Cache references
-- Cache misses
-- Kernel execution time
-- Cycles per bit
-- Cycles per symbol
-- Throughput
-- Latency
+The availability and interpretation of hardware-counter measurements depend on the processor, kernel permissions, and profiling configuration.
 
 ### Project Scope
 
-This project implements standalone 5G NR Layer-1 PHY kernels and evaluates their performance on the local Intel Core i7-12700 system.
+The repository implements six selected 5G NR PHY processing kernels and an experimental 2×2 MIMO transmitter–channel–receiver chain.
 
-The project does not require:
+The work includes:
+1. Python reference implementations.
+2. C implementations and cross-validation where applicable.
+3. Unit and integration testing.
+4. Kernel benchmarking and profiling.
+5. AWGN and multipath experiments.
+6. Channel-estimation and receiver-comparison studies.
+7. Technical specifications and experiment reports.
 
-- Intel Xeon Scalable hardware
-- AVX-512
-- ACC100/FPGA hardware
-- O-RAN fronthaul hardware
+The implementation is educational and experimental. It is not a complete or fully 3GPP-compliant NR modem.
 
-The optimization study will focus on:
+### Project Status
 
-1. Scalar baseline implementations
-2. AVX2 SIMD optimization
-3. Multithreading
-4. CPU core placement
-5. Memory and cache optimization
-6. System-level performance sweeps
+- Six standalone PHY kernels: implemented.
+- Python reference and C implementations: completed where applicable.
+- Kernel validation and Python/C cross-validation: completed where applicable.
+- Integrated experimental 2×2 MIMO link: implemented.
+- AWGN and multipath experiments: completed.
+- Delay-domain channel-estimation comparison: completed.
+- MMSE versus ZF comparison: completed.
+- Oracle-channel receiver comparison: completed.
+- Technical documentation and experiment reports: available in `docs/` and `results/`.
+- Final repository review and regression testing: in progress.
 
-### Status
+### Reproducibility Notes
 
-Phase 0 — Environment Setup: In Progress
+Experiment scripts, configurations, random seeds, CSV outputs, and reports are maintained in the repository where applicable.
 
-Next step: complete project configuration and begin Phase 1 scope definition.
+For the latest test status, run `pytest -q` from the repository root with the project virtual environment activated.
+
+Exact performance results are specific to the documented hardware, software versions, compiler settings, input configurations, and experiment trial counts.
